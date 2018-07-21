@@ -17,6 +17,10 @@
     "tslint-plugin-prettier": "^1.3.0"
   },
   "scripts": {
-    "tslint-check": "tslint-config-prettier-check ./tslint.json"
-  }
+    "tslint-check": "tslint-config-prettier-check ./tslint.json",
+    "lint": "tslint -c ./tslint.json --exclude **/*.d.ts --exclude ./node_modules --fix **/*.ts"
+  },
+  "pre-commit":[
+    "lint"
+  ]
 }
