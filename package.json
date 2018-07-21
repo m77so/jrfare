@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "index.js",
   "author": "m77so <m77code@gmail.com>",
-  "license": "MIT",
+  "license": "NO Commercial",
   "dependencies": {
     "iconv-lite": "^0.4.23",
     "typescript": "^2.9.2"
