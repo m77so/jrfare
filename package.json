@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "index.js",
   "author": "m77so <m77code@gmail.com>",
-  "license": "NO Commercial",
+  "license": "CC-BY-NC-SA-4.0",
   "dependencies": {
     "core-js": "^2.5.7",
     "iconv-lite": "^0.4.23",
