@@ -1,5 +1,4 @@
 import data from './data.json'
-// import data = require('./data.json')
 import { City, Line, Station } from './dataInterface'
 import 'core-js'
 export class ApplicationError implements Error {
