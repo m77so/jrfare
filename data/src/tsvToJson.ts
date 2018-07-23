@@ -1,6 +1,6 @@
 import * as fs from 'fs'
 import * as path from 'path'
-import { Companies, Line, MapZairai, OutputJSON, Station } from './dataInterface'
+import { Companies, Line, MapZairai, OutputJSON, Station, FareTable } from './dataInterface'
 const companyHash: { [key: string]: Companies } = {
   JR北: Companies.JRH,
   JR東: Companies.JRE,
@@ -14,7 +14,12 @@ const output: OutputJSON = {
   stationNames: [],
   lines: [],
   stations: [],
-  cities: []
+  cities: [],
+  appendixFare: {
+    JRHkansen: {},
+    JRQkansen: {},
+    JRSkansen: {}
+  }
 }
 
 const tsvLines = fs.readFileSync(path.join(__dirname, '..', 'resource', 'lines.tsv'), 'utf8').split('\n')
@@ -235,5 +240,22 @@ for (const cityAreaName of Object.keys(cities)) {
     output.stations[stationId].city = cityId
   })
 }
+
+const tsvJrhFare = fs.readFileSync(path.join(__dirname, '..', 'resource', 'jrhFare.tsv'), 'utf8').split('\n')
+const tsvJrqFare = fs.readFileSync(path.join(__dirname, '..', 'resource', 'jrqFare.tsv'), 'utf8').split('\n')
+const tsvJrsFare = fs.readFileSync(path.join(__dirname, '..', 'resource', 'jrsFare.tsv'), 'utf8').split('\n')
+
+const procFareTable = (src: string[], target: FareTable) => {
+  for (let l of src) {
+    const t = l.split('\t')
+    const lb = ~~t[0]
+    const vl = ~~t[1]
+    target[lb] = vl
+  }
+}
+
+procFareTable(tsvJrhFare, output.appendixFare.JRHkansen)
+procFareTable(tsvJrqFare, output.appendixFare.JRQkansen)
+procFareTable(tsvJrsFare, output.appendixFare.JRSkansen)
 
 fs.writeFileSync(path.join(__dirname, '..', 'output', 'data.json'), JSON.stringify(output, null, ''))

@@ -1,12 +1,13 @@
 # jrfare
 
-jrfareはJR運賃計算を行うライブラリです．https://github.com/m77so/deimos を引き継ぐプロジェクトとしてスタートしました．
+jrfare is a library to calculate the fare of JR.
 
-運賃計算部分はまだ全く実装していません．
+jrfareはJR運賃計算を行うライブラリです．
 
-## ライセンス
+## License
 
 CC-BY-NC-SA-4.0
 
-一部のデータは「MARS for MS-DOS（SWA作）」のデータを基にしています．
+Some data is based on the data of 'MARS fro MS-DOS'(by SWA).
 
+一部のデータは「MARS for MS-DOS（SWA作）」のデータを基にしています．

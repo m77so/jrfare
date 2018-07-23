@@ -33,13 +33,6 @@ export interface City {
   centralStationId: number
   cityStationIds: number[]
 }
-export interface OutputJSON {
-  lineNames: string[]
-  stationNames: string[]
-  lines: Line[]
-  cities: City[]
-  stations: Station[]
-}
 export enum Companies {
   JRH,
   JRE,
@@ -47,4 +40,19 @@ export enum Companies {
   JRW,
   JRS,
   JRQ
+}
+export type FareTable = { [key: number]: number }
+export interface AppendixFare {
+  JRHkansen: FareTable
+  JRSkansen: FareTable
+  JRQkansen: FareTable
+}
+
+export interface OutputJSON {
+  lineNames: string[]
+  stationNames: string[]
+  lines: Line[]
+  cities: City[]
+  stations: Station[]
+  appendixFare: AppendixFare
 }

@@ -27,7 +27,12 @@ const output: OutputJSON = {
   stationNames: [],
   lines: [],
   stations: [],
-  cities: []
+  cities: [],
+  appendixFare: {
+    JRHkansen: {},
+    JRQkansen: {},
+    JRSkansen: {}
+  }
 }
 const dataSD = fs.readFileSync(marsSdDat)
 /**

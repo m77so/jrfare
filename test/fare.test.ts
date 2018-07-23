@@ -53,3 +53,19 @@ describe('Shikoku Kansen', () => {
     assert.equal(fare.shikokuKansen(999), 12470)
   })
 })
+
+describe('Kyushu Kansen', () => {
+  it('1..10km', () => {
+    assert.equal(fare.kyushuKansen(2), 160)
+    assert.equal(fare.kyushuKansen(4), 210)
+    assert.equal(fare.kyushuKansen(6), 210)
+    assert.equal(fare.kyushuKansen(10), 230)
+  })
+  it('11..km', () => {
+    assert.equal(fare.kyushuKansen(12), 280)
+    assert.equal(fare.kyushuKansen(21), 460)
+    assert.equal(fare.kyushuKansen(49), 940)
+    assert.equal(fare.kyushuKansen(182), 3670)
+    assert.equal(fare.kyushuKansen(999), 12740)
+  })
+})
