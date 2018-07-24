@@ -34,7 +34,7 @@ describe('getStationByName', () => {
   it('invalid', () => {
     assert.throw(function() {
       main.getStationByName('らりるれ')
-    }, 'Unknown Station')
+    }, 'らりるれ is Unknown Station')
   })
 })
 

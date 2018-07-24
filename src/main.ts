@@ -19,7 +19,7 @@ export function getStationByName(stationName: string): Station {
     if (sugStations.length === 1) {
       stationId = sugStations[0].id
     } else {
-      throw new ApplicationError('Unknown Station')
+      throw new ApplicationError(`${stationName} is Unknown Station`)
     }
   }
   return data.stations[stationId]
