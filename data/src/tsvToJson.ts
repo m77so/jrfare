@@ -16,9 +16,9 @@ const output: OutputJSON = {
   stations: [],
   cities: [],
   appendixFare: {
-    JRHkansen: {},
-    JRQkansen: {},
-    JRSkansen: {}
+    JRHkansen: { km: [], fare: [] },
+    JRQkansen: { km: [], fare: [] },
+    JRSkansen: { km: [], fare: [] }
   }
 }
 
@@ -246,11 +246,18 @@ const tsvJrqFare = fs.readFileSync(path.join(__dirname, '..', 'resource', 'jrqFa
 const tsvJrsFare = fs.readFileSync(path.join(__dirname, '..', 'resource', 'jrsFare.tsv'), 'utf8').split('\n')
 
 const procFareTable = (src: string[], target: FareTable) => {
+  const tmpFaretable: { [key: number]: number } = {}
   for (let l of src) {
     const t = l.split('\t')
     const lb = ~~t[0]
     const vl = ~~t[1]
-    target[lb] = vl
+    tmpFaretable[lb] = vl
+  }
+  for (let l of Object.keys(tmpFaretable)
+    .map(l => ~~l)
+    .sort()) {
+    target.km.push(l)
+    target.fare.push(tmpFaretable[l])
   }
 }
 

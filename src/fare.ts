@@ -1,6 +1,5 @@
-import _data from './data.json'
+import data from './data.json'
 import * as dataInterface from './dataInterface'
-const data = _data as dataInterface.OutputJSON
 const chitaiCalc = (chitaiKms: number[], chitaiFares: number[], km: number): number => {
   let fareCent = 0
   for (let i = 0; i < chitaiKms.length; ++i) {
@@ -53,8 +52,9 @@ const kansenSuper = function(
   // Article 77 par.2
   km = kansenKmConvert(km)
   // Article 77-N par.2, Appendix 2-yi
-  if (faretable !== null && faretable.hasOwnProperty(km)) {
-    return faretable[km]
+  if (faretable !== null) {
+    let faretableIndex = faretable.km.indexOf(km)
+    if (faretableIndex > -1) return faretable.fare[faretableIndex]
   }
 
   if (km <= 10) {

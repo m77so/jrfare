@@ -41,7 +41,10 @@ export enum Companies {
   JRS,
   JRQ
 }
-export type FareTable = { [key: number]: number }
+export interface FareTable {
+  km: number[]
+  fare: number[]
+}
 export interface AppendixFare {
   JRHkansen: FareTable
   JRSkansen: FareTable

@@ -56,16 +56,21 @@ describe('Shikoku Kansen', () => {
 
 describe('Kyushu Kansen', () => {
   it('1..10km', () => {
-    assert.equal(fare.kyushuKansen(2), 160)
-    assert.equal(fare.kyushuKansen(4), 210)
+    assert.equal(fare.kyushuKansen(1), 160)
+    assert.equal(fare.kyushuKansen(5), 210)
     assert.equal(fare.kyushuKansen(6), 210)
-    assert.equal(fare.kyushuKansen(10), 230)
+    assert.equal(fare.kyushuKansen(9), 230)
   })
-  it('11..km', () => {
+  it('On appendix table', () => {
     assert.equal(fare.kyushuKansen(12), 280)
     assert.equal(fare.kyushuKansen(21), 460)
     assert.equal(fare.kyushuKansen(49), 940)
-    assert.equal(fare.kyushuKansen(182), 3670)
     assert.equal(fare.kyushuKansen(999), 12740)
+  })
+  it('calculate', () => {
+    assert.equal(fare.kyushuKansen(250), 4750)
+    assert.equal(fare.kyushuKansen(512), 8640)
+    assert.equal(fare.kyushuKansen(783), 11230)
+    assert.equal(fare.kyushuKansen(182), 3670)
   })
 })
