@@ -2,7 +2,7 @@
 
 このプロジェクトに含まれる「営業キロ」「運賃計算キロ」のデータは 「MARS for MS-DOS（SWA作）」のデータを基にしております．
 
-MARS for MS-DOSに含まれるmars_sd.dat,mars_nn.datを marsToTSV.jsを用いてTSV形式に変換します．
+MARS for MS-DOSに含まれるmars_sd.dat,mars_nn.datを marsToTSV.jsを用いてTSV形式に変換しました．今後,このtsvを編集し更新していくため，再びMARS for MS-DOSのデータを元にtsvを生成することはしないため，marsToTSV.jsはgistに隔離しました.(https://gist.github.com/m77so/2c5a193f1222246a96a8c533d188eaa4)
 
 TSV形式に変換したものが，distances.tsv,lines.tsv,stations.tsvです．
 
