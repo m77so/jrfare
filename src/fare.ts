@@ -35,16 +35,26 @@ const localKmConvert = (km: number): number => {
 }
 
 // Article 71 (2)
-const roundAndTax = (km: number, fareCent: number): number => {
+const roundDependOnKm = (km: number, fareCent: number): number => {
   // Article 71 (1)
   if (km <= 100) {
     fareCent = Math.ceil(fareCent / 1000) * 1000
   } else {
     fareCent = Math.round(fareCent / 10000) * 10000
   }
+  return fareCent
+}
+
+const taxRound = (fareCent: number): number => {
   // Article 71 (2)
   fareCent *= 1.08
   fareCent = Math.round(fareCent / 1000) * 1000
+  return fareCent / 100
+}
+
+const taxCeil = (fareCent: number): number => {
+  fareCent *= 1.08
+  fareCent = Math.ceil(fareCent / 1000) * 1000
   return fareCent / 100
 }
 
@@ -71,7 +81,8 @@ const art77Super = function(
     fareCent = chitaiCalc(art77dist, art77fare, km)
   }
   // Article 77 (2)
-  return roundAndTax(km, fareCent)
+  fareCent = roundDependOnKm(km, fareCent)
+  return taxRound(fareCent)
 }
 
 const kansenSuper = function(
@@ -149,4 +160,35 @@ export const shikokuLocal = function(convertedKm: number, operationKm: number): 
 // Article 77-8
 export const kyushuLocal = function(convertedKm: number, operationKm: number): number {
   return jrsjrqLocal(convertedKm, operationKm, data.appendixFare.JRSJRQlocal.JRQFare, kyushuKansen)
+}
+
+const tokyoSpecificSectionSuper = function(
+  km: number,
+  art84: number[],
+  chitaiKms: number[],
+  chitaiFares: number[]
+): number {
+  if (km <= 10) {
+    art84[3] = art84[2]
+    return art84[~~((km - 1) / 3)]
+  }
+  let fareCent = chitaiCalc(chitaiKms, chitaiFares, kansenKmConvert(km))
+  fareCent = roundDependOnKm(km, fareCent)
+  return taxCeil(fareCent)
+}
+
+export const yamanote = function(km: number): number {
+  return tokyoSpecificSectionSuper(km, [140, 160, 170], [300, 9999], [1325, 9999999])
+}
+
+export const osakaKanjo = function(km: number): number {
+  return kansenSuper(km, null, [120, 160, 180], [300, 9999], [1325, 9999999])
+}
+
+export const tokyoSpecificSection = function(km: number): number {
+  return tokyoSpecificSectionSuper(km, [140, 160, 170], [300, 600, 9999], [1530, 1215, 9999999])
+}
+
+export const osakaSpecificSection = function(km: number): number {
+  return kansenSuper(km, null, [120, 160, 180], [300, 600, 9999], [1530, 1215, 9999999])
 }

@@ -164,3 +164,31 @@ describe('Kyushu Local', () => {
     assert.equal(fare.kyushuLocal(181, 164), 3630)
   })
 })
+
+describe('Specific Section', () => {
+  it('yamanote', () => {
+    assert.equal(fare.yamanote(2), 140)
+    assert.equal(fare.yamanote(4), 160)
+    assert.equal(fare.yamanote(8), 170)
+    assert.equal(fare.yamanote(12), 200)
+    assert.equal(fare.yamanote(17), 260)
+  })
+  it('osaka kanjo', () => {
+    assert.equal(fare.osakaKanjo(2), 120)
+    assert.equal(fare.osakaKanjo(5), 160)
+    assert.equal(fare.osakaKanjo(8), 180)
+    assert.equal(fare.osakaKanjo(11), 190)
+    assert.equal(fare.osakaKanjo(19), 260)
+  })
+  it('tokyo specific section', () => {
+    assert.equal(fare.tokyoSpecificSection(5), 160)
+    assert.equal(fare.tokyoSpecificSection(22), 390)
+    assert.equal(fare.tokyoSpecificSection(220), 3460)
+    assert.equal(fare.tokyoSpecificSection(400), 6160)
+  })
+  it('osaka specific section', () => {
+    assert.equal(fare.osakaSpecificSection(3), 120)
+    assert.equal(fare.osakaSpecificSection(17), 300)
+    assert.equal(fare.osakaSpecificSection(334), 5400)
+  })
+})
