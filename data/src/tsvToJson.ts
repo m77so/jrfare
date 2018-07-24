@@ -158,9 +158,6 @@ for (const companyName of Object.keys(companyJSONData)) {
         })
       }
     }
-    if (line.company.length < 1) {
-      line.company.push(-1)
-    }
   })
 }
 interface ShinzaiInterface {
