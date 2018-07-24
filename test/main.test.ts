@@ -27,9 +27,9 @@ describe('getStationByName', () => {
     const res = main.getStationByName('諏訪')
     assert.equal(res.kana, 'すわ')
   })
-  it('multiple', () => {
-    const res = main.getStationByName('大')
-    assert.isOk(res.name.includes('大'))
+  it('substr', () => {
+    const res = main.getStationByName('土岐')
+    assert.equal(res.name, '土岐市')
   })
   it('invalid', () => {
     assert.throw(function() {
@@ -44,9 +44,37 @@ describe('getStationByLineAndName', () => {
     assert.equal(res.kana, 'すみよし')
     assert.isOk(data.lines[res.lineIds[0]].name.includes('東海'))
   })
-  it('direct', () => {
+  it('error', () => {
     assert.throw(function() {
       main.getStationByLineAndName('中央', '住吉')
     }, 'Unknown Station')
+  })
+})
+
+describe('getLineByName', () => {
+  it('direct', () => {
+    const res = main.getLineByName('中央東')
+    assert.equal(res.name, '中央東')
+  })
+  it('substr', () => {
+    const res = main.getLineByName('日田')
+    assert.equal(res.name, '日田彦山')
+  })
+  it('invalid', () => {
+    assert.throw(function() {
+      main.getLineByName('中央')
+    }, 'Unknown Line')
+  })
+})
+
+describe('getLineByStationAndName', () => {
+  it('direct', () => {
+    const res = main.getLineByStationAndName('中央', '金山')
+    assert.equal(res.name, '中央西')
+  })
+  it('invalid', () => {
+    assert.throw(function() {
+      main.getLineByStationAndName('山陰', '金山')
+    }, 'Unknown Line')
   })
 })
