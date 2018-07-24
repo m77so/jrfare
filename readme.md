@@ -1,4 +1,5 @@
 # jrfare
+[![Maintainability](https://api.codeclimate.com/v1/badges/0ebd6e324d71ded75f05/maintainability)](https://codeclimate.com/github/m77so/jrfare/maintainability)
 
 jrfare is a library to calculate the fare of JR.
 
