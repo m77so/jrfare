@@ -122,3 +122,45 @@ describe('Hokkaido Local', () => {
     assert.equal(fare.hokkaidoLocal(663), 10800)
   })
 })
+
+describe('Shikoku Local', () => {
+  it('Not Article 77-7 (2)', () => {
+    assert.equal(fare.shikokuLocal(2, 2), 160)
+    assert.equal(fare.shikokuLocal(4, 4), 210)
+    assert.equal(fare.shikokuLocal(8, 7), 220)
+    assert.equal(fare.shikokuLocal(15, 12), 260)
+    assert.equal(fare.shikokuLocal(45, 33), 850)
+    assert.equal(fare.shikokuLocal(51, 43), 1090)
+    assert.equal(fare.shikokuLocal(145, 113), 2750)
+  })
+  it('Article 77-7 (2)', () => {
+    assert.equal(fare.shikokuLocal(4, 3), 160)
+    assert.equal(fare.shikokuLocal(11, 3), 230)
+    assert.equal(fare.shikokuLocal(51, 46), 950)
+  })
+  it('JRQ exists but JRS not', () => {
+    assert.equal(fare.shikokuLocal(91, 82), 1810)
+    assert.equal(fare.shikokuLocal(181, 164), 3510)
+  })
+})
+
+describe('Kyushu Local', () => {
+  it('Not Article 77-7 (2)', () => {
+    assert.equal(fare.kyushuLocal(2, 2), 160)
+    assert.equal(fare.kyushuLocal(4, 4), 210)
+    assert.equal(fare.kyushuLocal(8, 7), 230)
+    assert.equal(fare.kyushuLocal(15, 12), 280)
+    assert.equal(fare.kyushuLocal(45, 33), 840)
+    assert.equal(fare.kyushuLocal(51, 43), 1110)
+    assert.equal(fare.kyushuLocal(145, 113), 2810)
+  })
+  it('Article 77-7 (2)', () => {
+    assert.equal(fare.kyushuLocal(4, 3), 180)
+    assert.equal(fare.kyushuLocal(11, 3), 250)
+    assert.equal(fare.kyushuLocal(51, 46), 1000)
+  })
+  it('JRQ exists but JRS not', () => {
+    assert.equal(fare.kyushuLocal(91, 82), 1660)
+    assert.equal(fare.kyushuLocal(181, 164), 3630)
+  })
+})

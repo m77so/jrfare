@@ -45,12 +45,19 @@ export interface FareTable {
   km: number[]
   fare: number[]
 }
+export interface JRSJRQlocalFareTable {
+  convertedKm: number[]
+  operatingKm: number[]
+  JRSFare: number[]
+  JRQFare: number[]
+}
 export interface AppendixFare {
   JRHkansen: FareTable
   JRSkansen: FareTable
   JRQkansen: FareTable
   local: FareTable
   JRHlocal: FareTable
+  JRSJRQlocal: JRSJRQlocalFareTable
 }
 
 export interface OutputJSON {

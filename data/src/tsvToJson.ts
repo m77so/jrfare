@@ -20,7 +20,8 @@ const output: OutputJSON = {
     JRQkansen: { km: [], fare: [] },
     JRSkansen: { km: [], fare: [] },
     local: { km: [], fare: [] },
-    JRHlocal: { km: [], fare: [] }
+    JRHlocal: { km: [], fare: [] },
+    JRSJRQlocal: { operatingKm: [], convertedKm: [], JRQFare: [], JRSFare: [] }
   },
   localDistance: []
 }
@@ -272,6 +273,18 @@ procFareTable(tsvJrqFare, output.appendixFare.JRQkansen)
 procFareTable(tsvJrsFare, output.appendixFare.JRSkansen)
 procFareTable(tsvLocalFare, output.appendixFare.local)
 procFareTable(tsvJRHLocalFare, output.appendixFare.JRHlocal)
+
+const tsvJRSJRQLocalFare = fs
+  .readFileSync(path.join(__dirname, '..', 'resource', 'jrsjrqLocalFare.tsv'), 'utf8')
+  .split('\n')
+  .map(l => l.split('\t').map(v => ~~v))
+
+for (let l of tsvJRSJRQLocalFare) {
+  output.appendixFare.JRSJRQlocal.convertedKm.push(l[0])
+  output.appendixFare.JRSJRQlocal.operatingKm.push(l[1])
+  output.appendixFare.JRSJRQlocal.JRSFare.push(l[2])
+  output.appendixFare.JRSJRQlocal.JRQFare.push(l[3])
+}
 
 const tsvLocalDistance = fs
   .readFileSync(path.join(__dirname, '..', 'resource', 'localDistance.tsv'), 'utf8')

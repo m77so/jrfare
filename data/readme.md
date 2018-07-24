@@ -44,3 +44,15 @@ marsToTSV.js,tsvTOJSON.jsは前project,deimosのFormat.tsを元に作成され�
 - jrhFare.tsv, jrqFare.tsv, jrsFare.tsv
   - JR Hokkaido, Kyushu, Shikoku specific fare.
   - 別表第2号イ1〜3に基づくJR北海道,九州,四国の特定額
+- localJrsJrqFare.tsv
+  - JR Shikoku and Kyushu 's Local line specific fare.
+
+## Strcture
+
+- localJrsJrqFare.tsv
+  - converted kilometers
+  - operating kilometers
+    - if -1 then not specified
+  - JR Shikoku fare
+    - if -1 then undefined
+  - JR Kyushu fare

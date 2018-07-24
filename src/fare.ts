@@ -121,3 +121,32 @@ export const hokkaidoLocal = function(km: number): number {
     [1960, 1780, 1410, 770]
   )
 }
+
+// Article 77-7,8
+const jrsjrqLocal = function(
+  convertedKm: number,
+  operationKm: number,
+  fareArray: number[],
+  kansenFunction: (km: number) => number
+): number {
+  const faretable = data.appendixFare.JRSJRQlocal
+  const faretableIndex = faretable.convertedKm.indexOf(convertedKm)
+  if (
+    faretableIndex !== -1 &&
+    (faretable.operatingKm[faretableIndex] === operationKm || faretable.operatingKm[faretableIndex] === -1) &&
+    fareArray[faretableIndex] > 0
+  ) {
+    return fareArray[faretableIndex]
+  }
+  return kansenFunction(convertedKm)
+}
+
+// Article 77-7
+export const shikokuLocal = function(convertedKm: number, operationKm: number): number {
+  return jrsjrqLocal(convertedKm, operationKm, data.appendixFare.JRSJRQlocal.JRSFare, shikokuKansen)
+}
+
+// Article 77-8
+export const kyushuLocal = function(convertedKm: number, operationKm: number): number {
+  return jrsjrqLocal(convertedKm, operationKm, data.appendixFare.JRSJRQlocal.JRQFare, kyushuKansen)
+}
