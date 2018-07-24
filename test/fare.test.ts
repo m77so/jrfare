@@ -74,3 +74,51 @@ describe('Kyushu Kansen', () => {
     assert.equal(fare.kyushuKansen(182), 3670)
   })
 })
+
+describe('Hondo Local', () => {
+  it('1..10km', () => {
+    assert.equal(fare.hondoLocal(2), 140)
+    assert.equal(fare.hondoLocal(5), 190)
+    assert.equal(fare.hondoLocal(9), 210)
+  })
+  it('Around 22km', () => {
+    assert.equal(fare.hondoLocal(20), 320)
+    assert.equal(fare.hondoLocal(21), 410)
+    assert.equal(fare.hondoLocal(22), 410)
+    assert.equal(fare.hondoLocal(23), 410)
+    assert.equal(fare.hondoLocal(24), 500)
+  })
+  it('Appendix table', () => {
+    assert.equal(fare.hondoLocal(47), 970)
+    assert.equal(fare.hondoLocal(108), 1940)
+  })
+  it('calculate', () => {
+    assert.equal(fare.hondoLocal(99), 1850)
+    assert.equal(fare.hondoLocal(140), 2590)
+    assert.equal(fare.hondoLocal(300), 5620)
+  })
+})
+
+describe('Hokkaido Local', () => {
+  it('1..10km', () => {
+    assert.equal(fare.hokkaidoLocal(2), 170)
+    assert.equal(fare.hokkaidoLocal(5), 210)
+    assert.equal(fare.hokkaidoLocal(9), 230)
+  })
+  it('Around 22km', () => {
+    assert.equal(fare.hokkaidoLocal(20), 360)
+    assert.equal(fare.hokkaidoLocal(21), 450)
+    assert.equal(fare.hokkaidoLocal(22), 450)
+    assert.equal(fare.hokkaidoLocal(23), 450)
+    assert.equal(fare.hokkaidoLocal(24), 540)
+  })
+  it('Appendix table', () => {
+    assert.equal(fare.hokkaidoLocal(47), 1070)
+    assert.equal(fare.hokkaidoLocal(108), 2160)
+  })
+  it('calculate', () => {
+    assert.equal(fare.hokkaidoLocal(150), 3240)
+    assert.equal(fare.hokkaidoLocal(270), 5400)
+    assert.equal(fare.hokkaidoLocal(663), 10800)
+  })
+})

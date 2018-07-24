@@ -14,7 +14,7 @@ export interface Line {
   kms: number[]
   akms: number[]
   dupLineStationIds: number[]
-  chiho: boolean
+  local: boolean
   shinkansen: boolean
   company: number[]
   mapZairai: MapZairai[]
@@ -49,6 +49,8 @@ export interface AppendixFare {
   JRHkansen: FareTable
   JRSkansen: FareTable
   JRQkansen: FareTable
+  local: FareTable
+  JRHlocal: FareTable
 }
 
 export interface OutputJSON {
@@ -58,4 +60,5 @@ export interface OutputJSON {
   cities: City[]
   stations: Station[]
   appendixFare: AppendixFare
+  localDistance: number[]
 }

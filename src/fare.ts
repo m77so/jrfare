@@ -15,16 +15,23 @@ const chitaiCalc = (chitaiKms: number[], chitaiFares: number[], km: number): num
 // Article 71 par.2
 const kansenKmConvert = (km: number): number => {
   if (km < 11) {
-    return km
+    km = km
   } else if (km <= 50) {
-    return ~~((km - 1) / 5) * 5 + 3
+    km = ~~((km - 1) / 5) * 5 + 3
   } else if (km <= 100) {
-    return ~~((km - 1) / 10) * 10 + 5
+    km = ~~((km - 1) / 10) * 10 + 5
   } else if (km <= 600) {
-    return ~~((km - 1) / 20) * 20 + 10
+    km = ~~((km - 1) / 20) * 20 + 10
   } else {
-    return ~~((km - 1) / 40) * 40 + 20
+    km = ~~((km - 1) / 40) * 40 + 20
   }
+  return km
+}
+
+const localKmConvert = (km: number): number => {
+  if (km < 11 || km > 1200) return km
+  const localDistanceIndex = data.localDistance.filter(i => i <= km).length
+  return ~~((data.localDistance[localDistanceIndex] + data.localDistance[localDistanceIndex - 1] - 1) / 2)
 }
 
 // Article 71 (2)
@@ -41,7 +48,7 @@ const roundAndTax = (km: number, fareCent: number): number => {
   return fareCent / 100
 }
 
-const kansenSuper = function(
+const art77Super = function(
   km: number,
   faretable: dataInterface.FareTable | null,
   art84: number[],
@@ -49,8 +56,6 @@ const kansenSuper = function(
   art77fare: number[]
 ): number {
   let fareCent = 0
-  // Article 77 par.2
-  km = kansenKmConvert(km)
   // Article 77-N par.2, Appendix 2-yi
   if (faretable !== null) {
     let faretableIndex = faretable.km.indexOf(km)
@@ -67,6 +72,17 @@ const kansenSuper = function(
   }
   // Article 77 (2)
   return roundAndTax(km, fareCent)
+}
+
+const kansenSuper = function(
+  km: number,
+  faretable: dataInterface.FareTable | null,
+  art84: number[],
+  art77dist: number[],
+  art77fare: number[]
+): number {
+  // Article 77 par.2
+  return art77Super(kansenKmConvert(km), faretable, art84, art77dist, art77fare)
 }
 
 // Article 77
@@ -88,4 +104,20 @@ export const shikokuKansen = function(km: number): number {
 export const kyushuKansen = function(km: number): number {
   // Article 77-4 (1) is contained in the appendixFare.JRQkansen
   return kansenSuper(km, data.appendixFare.JRQkansen, [160, 210, 230], [300, 600, 9999], [1775, 1285, 705])
+}
+
+// Article 77-5, 84 (3)
+export const hondoLocal = function(km: number): number {
+  return art77Super(localKmConvert(km), data.appendixFare.local, [140, 190, 210], [273, 546, 9999], [1780, 1410, 770])
+}
+
+// Article 77-6, 84-2(2)
+export const hokkaidoLocal = function(km: number): number {
+  return art77Super(
+    localKmConvert(km),
+    data.appendixFare.JRHlocal,
+    [170, 210, 230],
+    [182, 273, 546, 9999],
+    [1960, 1780, 1410, 770]
+  )
 }

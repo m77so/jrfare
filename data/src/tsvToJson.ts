@@ -18,8 +18,11 @@ const output: OutputJSON = {
   appendixFare: {
     JRHkansen: { km: [], fare: [] },
     JRQkansen: { km: [], fare: [] },
-    JRSkansen: { km: [], fare: [] }
-  }
+    JRSkansen: { km: [], fare: [] },
+    local: { km: [], fare: [] },
+    JRHlocal: { km: [], fare: [] }
+  },
+  localDistance: []
 }
 
 const tsvLines = fs.readFileSync(path.join(__dirname, '..', 'resource', 'lines.tsv'), 'utf8').split('\n')
@@ -55,7 +58,7 @@ for (const line of tsvLines) {
     kms: [],
     akms: [],
     dupLineStationIds: [],
-    chiho: false,
+    local: false,
     shinkansen: name.indexOf('新幹線') > -1,
     company: [],
     mapZairai: []
@@ -96,11 +99,11 @@ for (const line of output.lines) {
 }
 
 // 地方路線情報を付記
-const chihoLines = fs.readFileSync(path.join(__dirname, '..', 'resource', 'chihoLines.txt'), 'utf-8').split('\n')
-chihoLines.forEach(chihoLine => {
+const localLines = fs.readFileSync(path.join(__dirname, '..', 'resource', 'localLines.txt'), 'utf-8').split('\n')
+localLines.forEach(localLine => {
   output.lines.forEach(line => {
-    if (line.name.includes(chihoLine)) {
-      line.chiho = true
+    if (line.name.includes(localLine)) {
+      line.local = true
     }
   })
 })
@@ -244,6 +247,8 @@ for (const cityAreaName of Object.keys(cities)) {
 const tsvJrhFare = fs.readFileSync(path.join(__dirname, '..', 'resource', 'jrhFare.tsv'), 'utf8').split('\n')
 const tsvJrqFare = fs.readFileSync(path.join(__dirname, '..', 'resource', 'jrqFare.tsv'), 'utf8').split('\n')
 const tsvJrsFare = fs.readFileSync(path.join(__dirname, '..', 'resource', 'jrsFare.tsv'), 'utf8').split('\n')
+const tsvLocalFare = fs.readFileSync(path.join(__dirname, '..', 'resource', 'localFare.tsv'), 'utf8').split('\n')
+const tsvJRHLocalFare = fs.readFileSync(path.join(__dirname, '..', 'resource', 'jrhLocalFare.tsv'), 'utf8').split('\n')
 
 const procFareTable = (src: string[], target: FareTable) => {
   const tmpFaretable: { [key: number]: number } = {}
@@ -253,9 +258,10 @@ const procFareTable = (src: string[], target: FareTable) => {
     const vl = ~~t[1]
     tmpFaretable[lb] = vl
   }
-  for (let l of Object.keys(tmpFaretable)
+  const ok = Object.keys(tmpFaretable)
     .map(l => ~~l)
-    .sort()) {
+    .sort((a, b) => a - b)
+  for (let l of ok) {
     target.km.push(l)
     target.fare.push(tmpFaretable[l])
   }
@@ -264,5 +270,14 @@ const procFareTable = (src: string[], target: FareTable) => {
 procFareTable(tsvJrhFare, output.appendixFare.JRHkansen)
 procFareTable(tsvJrqFare, output.appendixFare.JRQkansen)
 procFareTable(tsvJrsFare, output.appendixFare.JRSkansen)
+procFareTable(tsvLocalFare, output.appendixFare.local)
+procFareTable(tsvJRHLocalFare, output.appendixFare.JRHlocal)
+
+const tsvLocalDistance = fs
+  .readFileSync(path.join(__dirname, '..', 'resource', 'localDistance.tsv'), 'utf8')
+  .split('\n')
+  .map(l => l.split('\t').map(v => ~~v))
+output.localDistance = tsvLocalDistance.map(l => l[0])
+output.localDistance.push(tsvLocalDistance[tsvLocalDistance.length - 1][1])
 
 fs.writeFileSync(path.join(__dirname, '..', 'output', 'data.json'), JSON.stringify(output, null, ''))
