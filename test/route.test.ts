@@ -33,6 +33,13 @@ describe('Route/Hondo', () => {
     assert.equal(res.distanceResponse.operationDKm, 1524)
     assert.equal(res.fare, 3020)
   })
+  it('Yamanote', () => {
+    const stations = ['渋谷', '目黒'].map(Main.getStationByName)
+    const lines = [Main.getLineByStationAndName('山手', '目黒')]
+    const res = Route.calc({ stations: stations, lines: lines })
+    assert.equal(res.distanceResponse.operationDKm, 31)
+    assert.equal(res.fare, 160)
+  })
 })
 
 describe('Route/Kyushu', () => {
