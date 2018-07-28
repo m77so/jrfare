@@ -61,7 +61,7 @@ for (const line of tsvLines) {
     dupLineStationIds: [],
     local: false,
     shinkansen: name.indexOf('新幹線') > -1,
-    company: [],
+    edgeGroup: [],
     mapZairai: []
   }
   output.lineNames[id] = name
@@ -110,55 +110,52 @@ localLines.forEach(localLine => {
 })
 
 // 会社情報を付記
-interface CompanyOwnData {
-  entire: string[]
-  partial: { [key: string]: string[] }
+const addCompanyToStation = (stationId: number, company: Companies) => {
+  const c = output.stations[stationId].company
+  if (c.indexOf(company) === -1) c.push(company)
 }
-const companyJSONData = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'resource', 'company.json'), 'utf8'))
-for (const companyName of Object.keys(companyJSONData)) {
-  const companyCode = companyHash[companyName]
-  const data = companyJSONData[companyName]
-  const c: CompanyOwnData = Object.assign({}, data)
-
-  output.lineNames.forEach((lineName, lineId) => {
-    const line = output.lines[lineId]
-    for (let i = 0; i < c.entire.length; ++i) {
-      if (lineName.indexOf(c.entire[i]) !== 0) {
-        continue
-      }
-      line.company.push(companyCode)
-      line.stationIds.forEach(stationId => {
-        const companyList = output.stations[stationId].company
-        if (!companyList.includes(companyCode)) {
-          companyList.push(companyCode)
-        }
-      })
-      return
-    }
-    for (const partialLineName of Object.keys(c.partial)) {
-      if (lineName.indexOf(partialLineName) !== 0) {
-        continue
-      }
-      for (let i = 0; i < c.partial[partialLineName].length / 2; ++i) {
-        let startIndex = line.stations.indexOf(c.partial[partialLineName][i * 2])
-        let endIndex = line.stations.indexOf(c.partial[partialLineName][i * 2 + 1])
-        ;[startIndex, endIndex] = [Math.min(startIndex, endIndex), Math.max(startIndex, endIndex)]
-        if (startIndex < 0 || endIndex < 0) {
-          continue
-        }
-        for (let index = startIndex; index <= endIndex; ++index) {
-          line.company[index] = companyCode
-        }
-        const stationIds = line.stationIds.slice(startIndex, endIndex + 1)
-        stationIds.forEach(stationId => {
-          const companyList = output.stations[stationId].company
-          if (!companyList.includes(companyCode)) {
-            companyList.push(companyCode)
-          }
-        })
+const tsvCompany = fs.readFileSync(path.join(__dirname, '..', 'resource', 'company.tsv'), 'utf8').split('\n')
+for (let l of tsvCompany) {
+  let lineName = ''
+  let value = ''
+  ;[lineName, value] = l.split('\t')
+  const lines = output.lines.filter(l => l.name.includes(lineName))
+  let valueArr = value.split(',')
+  if (valueArr.length === 1) {
+    for (let line of lines) {
+      line.edgeGroup = [[companyHash[value]]]
+      for (let stationID of line.stationIds) {
+        addCompanyToStation(stationID, companyHash[value])
       }
     }
-  })
+  } else {
+    let stations = valueArr.filter((v, i) => i % 2 === 0)
+    let companies = valueArr.filter((v, i) => i % 2 === 1)
+    for (let line of lines) {
+      const lineStations = line.stationIds.map(id => output.stations[id].name)
+      let lineHasAllStations = true
+      for (let station of stations) {
+        lineHasAllStations = lineHasAllStations && lineStations.includes(station)
+      }
+      if (!lineHasAllStations) continue
+      let stationLineIndices = stations.map(station => lineStations.indexOf(station))
+      if (stationLineIndices[0] > 0) {
+        stations.reverse()
+        stationLineIndices.reverse()
+        companies.reverse()
+      }
+      let needle = 1
+      for (let i = 0; i < lineStations.length - 1; ++i) {
+        if (i >= stationLineIndices[needle]) {
+          addCompanyToStation(line.stationIds[i], companyHash[companies[needle - 1]])
+          needle++
+        }
+        line.edgeGroup.push([companyHash[companies[needle - 1]]])
+        addCompanyToStation(line.stationIds[i], companyHash[companies[needle - 1]])
+      }
+      break
+    }
+  }
 }
 interface ShinzaiInterface {
   src: string

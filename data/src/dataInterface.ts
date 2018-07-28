@@ -16,7 +16,7 @@ export interface Line {
   dupLineStationIds: number[]
   local: boolean
   shinkansen: boolean
-  company: number[]
+  edgeGroup: number[][]
   mapZairai: MapZairai[]
 }
 export interface Station {
