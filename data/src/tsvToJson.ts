@@ -142,7 +142,7 @@ for (let l of tsvCompany) {
     const company = ownerHash[value]
     for (let line of lines) {
       for (let lineEdgeGroupElem of line.edgeGroup) {
-        if (lineEdgeGroupElem.indexOf(company) === -1) lineEdgeGroupElem.push(company)
+        lineEdgeGroupElem.push(company)
       }
       for (let stationID of line.stationIds) {
         addCompanyToStation(stationID, company)
