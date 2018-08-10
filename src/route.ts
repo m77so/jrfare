@@ -1,5 +1,5 @@
 import data from './data.json'
-import { City, Line, Station, Companies } from './dataInterface'
+import { City, Line, Station, EdgeOwner } from './dataInterface'
 import { ApplicationError } from './main'
 import * as Fare from './fare'
 export interface CalcArgument {
@@ -16,7 +16,7 @@ interface DistanceResponse {
   convertedDKm: number
   operationFareKm: number
   convertedFareKm: number
-  companies: Companies[]
+  companies: EdgeOwner[]
   kansen: boolean
   local: boolean
 }
@@ -75,22 +75,22 @@ export const calc = (calcArg: CalcArgument): CalcResponse => {
   const routeDistance = getDistance(calcArg)
   let resultFare = 0
   if (
-    routeDistance.companies.includes(Companies.JRC) ||
-    routeDistance.companies.includes(Companies.JRE) ||
-    routeDistance.companies.includes(Companies.JRW)
+    routeDistance.companies.includes(EdgeOwner.JRC) ||
+    routeDistance.companies.includes(EdgeOwner.JRE) ||
+    routeDistance.companies.includes(EdgeOwner.JRW)
   ) {
     if (routeDistance.kansen) {
       resultFare = Fare.hondoKansen(routeDistance.convertedFareKm)
     } else {
       resultFare = Fare.hondoLocal(routeDistance.operationFareKm)
     }
-  } else if (routeDistance.companies.includes(Companies.JRQ)) {
+  } else if (routeDistance.companies.includes(EdgeOwner.JRQ)) {
     if (routeDistance.local) {
       resultFare = Fare.kyushuLocal(routeDistance.convertedFareKm, routeDistance.operationFareKm)
     } else {
       resultFare = Fare.kyushuKansen(routeDistance.operationFareKm)
     }
-  } else if (routeDistance.companies.includes(Companies.JRS)) {
+  } else if (routeDistance.companies.includes(EdgeOwner.JRS)) {
     if (routeDistance.local) {
       resultFare = Fare.shikokuLocal(routeDistance.convertedFareKm, routeDistance.operationFareKm)
     } else {

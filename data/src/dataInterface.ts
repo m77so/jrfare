@@ -33,13 +33,22 @@ export interface City {
   centralStationId: number
   cityStationIds: number[]
 }
-export enum Companies {
+export enum EdgeOwner {
   JRH,
   JRE,
   JRC,
   JRW,
   JRS,
-  JRQ
+  JRQ,
+  TYOSPC, // 東京特定区間
+  TYOSBB, // 東京近郊区間
+  TYOJY, // 山手線
+  OSASPC, // 大阪
+  OSASBB,
+  OSALL,
+  FUKSBB,
+  KIJSBB,
+  SDJSBB
 }
 export interface FareTable {
   km: number[]

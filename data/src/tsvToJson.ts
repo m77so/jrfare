@@ -1,13 +1,22 @@
 import * as fs from 'fs'
 import * as path from 'path'
-import { Companies, Line, MapZairai, OutputJSON, Station, FareTable } from './dataInterface'
-const companyHash: { [key: string]: Companies } = {
-  JR北: Companies.JRH,
-  JR東: Companies.JRE,
-  JR海: Companies.JRC,
-  JR西: Companies.JRW,
-  JR四: Companies.JRS,
-  JR九: Companies.JRQ
+import { EdgeOwner, Line, MapZairai, OutputJSON, Station, FareTable } from './dataInterface'
+const ownerHash: { [key: string]: EdgeOwner } = {
+  JR北: EdgeOwner.JRH,
+  JR東: EdgeOwner.JRE,
+  JR海: EdgeOwner.JRC,
+  JR西: EdgeOwner.JRW,
+  JR四: EdgeOwner.JRS,
+  JR九: EdgeOwner.JRQ,
+  東京特: EdgeOwner.TYOSPC,
+  東京近: EdgeOwner.TYOSBB,
+  山手: EdgeOwner.TYOJY,
+  大阪特: EdgeOwner.OSASPC,
+  大阪近: EdgeOwner.OSASBB,
+  大阪環: EdgeOwner.OSALL,
+  福岡近: EdgeOwner.FUKSBB,
+  新潟近: EdgeOwner.KIJSBB,
+  仙台近: EdgeOwner.SDJSBB
 }
 const output: OutputJSON = {
   lineNames: [],
@@ -109,11 +118,18 @@ localLines.forEach(localLine => {
   })
 })
 
+// EdgeGroup初期化
+for (let l of output.lines) {
+  for (let i = 0; i < l.stations.length - 1; ++i) {
+    l.edgeGroup.push([])
+  }
+}
 // 会社情報を付記
-const addCompanyToStation = (stationId: number, company: Companies) => {
+const addCompanyToStation = (stationId: number, company: EdgeOwner) => {
   const c = output.stations[stationId].company
   if (c.indexOf(company) === -1) c.push(company)
 }
+// tsvファイルを行ごとに処理する
 const tsvCompany = fs.readFileSync(path.join(__dirname, '..', 'resource', 'company.tsv'), 'utf8').split('\n')
 for (let l of tsvCompany) {
   let lineName = ''
@@ -122,13 +138,18 @@ for (let l of tsvCompany) {
   const lines = output.lines.filter(l => l.name.includes(lineName))
   let valueArr = value.split(',')
   if (valueArr.length === 1) {
+    // 全線が同一会社
+    const company = ownerHash[value]
     for (let line of lines) {
-      line.edgeGroup = [[companyHash[value]]]
+      for (let lineEdgeGroupElem of line.edgeGroup) {
+        if (lineEdgeGroupElem.indexOf(company) === -1) lineEdgeGroupElem.push(company)
+      }
       for (let stationID of line.stationIds) {
-        addCompanyToStation(stationID, companyHash[value])
+        addCompanyToStation(stationID, company)
       }
     }
   } else {
+    // 区間に依って会社が違う
     let stations = valueArr.filter((v, i) => i % 2 === 0)
     let companies = valueArr.filter((v, i) => i % 2 === 1)
     for (let line of lines) {
@@ -139,19 +160,19 @@ for (let l of tsvCompany) {
       }
       if (!lineHasAllStations) continue
       let stationLineIndices = stations.map(station => lineStations.indexOf(station))
-      if (stationLineIndices[0] > 0) {
+      if (stationLineIndices[0] > stationLineIndices[stationLineIndices.length - 1]) {
         stations.reverse()
         stationLineIndices.reverse()
         companies.reverse()
       }
       let needle = 1
-      for (let i = 0; i < lineStations.length - 1; ++i) {
+      for (let i = stationLineIndices[0]; i < stationLineIndices[stationLineIndices.length - 1]; ++i) {
         if (i >= stationLineIndices[needle]) {
-          addCompanyToStation(line.stationIds[i], companyHash[companies[needle - 1]])
+          addCompanyToStation(line.stationIds[i], ownerHash[companies[needle - 1]])
           needle++
         }
-        line.edgeGroup.push([companyHash[companies[needle - 1]]])
-        addCompanyToStation(line.stationIds[i], companyHash[companies[needle - 1]])
+        line.edgeGroup[i].push(ownerHash[companies[needle - 1]])
+        addCompanyToStation(line.stationIds[i], ownerHash[companies[needle - 1]])
       }
       break
     }
