@@ -135,7 +135,9 @@ for (let l of tsvCompany) {
   let lineName = ''
   let value = ''
   ;[lineName, value] = l.split('\t')
-  const lines = output.lines.filter(l => l.name.includes(lineName))
+  const lines = output.lines
+    .filter(l => l.name.includes(lineName))
+    .filter(l => l.name.includes('新幹線') === lineName.includes('新幹線'))
   let valueArr = value.split(',')
   if (valueArr.length === 1) {
     // 全線が同一会社
@@ -148,34 +150,34 @@ for (let l of tsvCompany) {
         addCompanyToStation(stationID, company)
       }
     }
-  } else {
-    // 区間に依って会社が違う
-    let stations = valueArr.filter((v, i) => i % 2 === 0)
-    let companies = valueArr.filter((v, i) => i % 2 === 1)
-    for (let line of lines) {
-      const lineStations = line.stationIds.map(id => output.stations[id].name)
-      let lineHasAllStations = true
-      for (let station of stations) {
-        lineHasAllStations = lineHasAllStations && lineStations.includes(station)
-      }
-      if (!lineHasAllStations) continue
-      let stationLineIndices = stations.map(station => lineStations.indexOf(station))
-      if (stationLineIndices[0] > stationLineIndices[stationLineIndices.length - 1]) {
-        stations.reverse()
-        stationLineIndices.reverse()
-        companies.reverse()
-      }
-      let needle = 1
-      for (let i = stationLineIndices[0]; i < stationLineIndices[stationLineIndices.length - 1]; ++i) {
-        if (i >= stationLineIndices[needle]) {
-          addCompanyToStation(line.stationIds[i], ownerHash[companies[needle - 1]])
-          needle++
-        }
-        line.edgeGroup[i].push(ownerHash[companies[needle - 1]])
-        addCompanyToStation(line.stationIds[i], ownerHash[companies[needle - 1]])
-      }
-      break
+    continue
+  }
+  // 区間に依って会社が違う
+  let stations = valueArr.filter((v, i) => i % 2 === 0)
+  let companies = valueArr.filter((v, i) => i % 2 === 1)
+  for (let line of lines) {
+    const lineStations = line.stationIds.map(id => output.stations[id].name)
+    let lineHasAllStations = true
+    for (let station of stations) {
+      lineHasAllStations = lineHasAllStations && lineStations.includes(station)
     }
+    if (!lineHasAllStations) continue
+    let stationLineIndices = stations.map(station => lineStations.indexOf(station))
+    if (stationLineIndices[0] > stationLineIndices[stationLineIndices.length - 1]) {
+      stations.reverse()
+      stationLineIndices.reverse()
+      companies.reverse()
+    }
+    let needle = 1
+    for (let i = stationLineIndices[0]; i < stationLineIndices[stationLineIndices.length - 1]; ++i) {
+      if (i >= stationLineIndices[needle]) {
+        addCompanyToStation(line.stationIds[i], ownerHash[companies[needle - 1]])
+        needle++
+      }
+      line.edgeGroup[i].push(ownerHash[companies[needle - 1]])
+      addCompanyToStation(line.stationIds[i], ownerHash[companies[needle - 1]])
+    }
+    break
   }
 }
 interface ShinzaiInterface {
@@ -260,19 +262,22 @@ for (const cityAreaName of Object.keys(cities)) {
   })
 }
 
-const tsvJrhFare = fs.readFileSync(path.join(__dirname, '..', 'resource', 'jrhFare.tsv'), 'utf8').split('\n')
-const tsvJrqFare = fs.readFileSync(path.join(__dirname, '..', 'resource', 'jrqFare.tsv'), 'utf8').split('\n')
-const tsvJrsFare = fs.readFileSync(path.join(__dirname, '..', 'resource', 'jrsFare.tsv'), 'utf8').split('\n')
-const tsvLocalFare = fs.readFileSync(path.join(__dirname, '..', 'resource', 'localFare.tsv'), 'utf8').split('\n')
-const tsvJRHLocalFare = fs.readFileSync(path.join(__dirname, '..', 'resource', 'jrhLocalFare.tsv'), 'utf8').split('\n')
+const readIntTSVSync = (filepath: string) => {
+  return fs
+    .readFileSync(filepath, 'utf8')
+    .split('\n')
+    .map(l => l.split('\t').map(v => ~~v))
+}
+const tsvJrhFare = readIntTSVSync(path.join(__dirname, '..', 'resource', 'jrhFare.tsv'))
+const tsvJrqFare = readIntTSVSync(path.join(__dirname, '..', 'resource', 'jrqFare.tsv'))
+const tsvJrsFare = readIntTSVSync(path.join(__dirname, '..', 'resource', 'jrsFare.tsv'))
+const tsvLocalFare = readIntTSVSync(path.join(__dirname, '..', 'resource', 'localFare.tsv'))
+const tsvJRHLocalFare = readIntTSVSync(path.join(__dirname, '..', 'resource', 'jrhLocalFare.tsv'))
 
-const procFareTable = (src: string[], target: FareTable) => {
+const procFareTable = (src: number[][], target: FareTable) => {
   const tmpFaretable: { [key: number]: number } = {}
-  for (let l of src) {
-    const t = l.split('\t')
-    const lb = ~~t[0]
-    const vl = ~~t[1]
-    tmpFaretable[lb] = vl
+  for (let t of src) {
+    tmpFaretable[t[0]] = t[1]
   }
   const ok = Object.keys(tmpFaretable)
     .map(l => ~~l)
@@ -289,10 +294,7 @@ procFareTable(tsvJrsFare, output.appendixFare.JRSkansen)
 procFareTable(tsvLocalFare, output.appendixFare.local)
 procFareTable(tsvJRHLocalFare, output.appendixFare.JRHlocal)
 
-const tsvJRSJRQLocalFare = fs
-  .readFileSync(path.join(__dirname, '..', 'resource', 'jrsjrqLocalFare.tsv'), 'utf8')
-  .split('\n')
-  .map(l => l.split('\t').map(v => ~~v))
+const tsvJRSJRQLocalFare = readIntTSVSync(path.join(__dirname, '..', 'resource', 'jrsjrqLocalFare.tsv'))
 
 for (let l of tsvJRSJRQLocalFare) {
   output.appendixFare.JRSJRQlocal.convertedKm.push(l[0])
@@ -301,10 +303,7 @@ for (let l of tsvJRSJRQLocalFare) {
   output.appendixFare.JRSJRQlocal.JRQFare.push(l[3])
 }
 
-const tsvLocalDistance = fs
-  .readFileSync(path.join(__dirname, '..', 'resource', 'localDistance.tsv'), 'utf8')
-  .split('\n')
-  .map(l => l.split('\t').map(v => ~~v))
+const tsvLocalDistance = readIntTSVSync(path.join(__dirname, '..', 'resource', 'localDistance.tsv'))
 output.localDistance = tsvLocalDistance.map(l => l[0])
 output.localDistance.push(tsvLocalDistance[tsvLocalDistance.length - 1][1])
 
