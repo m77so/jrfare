@@ -50,6 +50,8 @@ export enum EdgeOwner {
   KIJSBB,
   SDJSBB
 }
+
+export const JRCompanies = [EdgeOwner.JRH, EdgeOwner.JRQ, EdgeOwner.JRS, EdgeOwner.JRC, EdgeOwner.JRE, EdgeOwner.JRW]
 export interface FareTable {
   km: number[]
   fare: number[]

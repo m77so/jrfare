@@ -1,5 +1,5 @@
 import data from './data.json'
-import { City, Line, Station, EdgeOwner } from './dataInterface'
+import { City, Line, Station, EdgeOwner, JRCompanies } from './dataInterface'
 import { ApplicationError } from './main'
 import * as Fare from './fare'
 export interface CalcArgument {
@@ -20,6 +20,34 @@ interface DistanceResponse {
   kansen: boolean
   local: boolean
 }
+interface EdgeDistanceInterface {}
+class EdgeDistance {
+  companies: EdgeOwner[]
+  operationDKm: number
+  convertedDKm: number
+  get operationFareKm() {
+    return Math.ceil(this.operationDKm / 10)
+  }
+  get convertedFareKm() {
+    return Math.ceil(this.convertedDKm / 10)
+  }
+  kansen: boolean
+  local: boolean
+  constructor(companies: EdgeOwner[]) {
+    this.companies = companies
+    this.operationDKm = 0
+    this.convertedDKm = 0
+    this.kansen = false
+    this.local = false
+  }
+  merge(target: EdgeDistance) {
+    this.companies.concat(target.companies).filter((x, i, self) => self.indexOf(x) === i)
+    this.operationDKm += target.operationDKm
+    this.convertedDKm += target.convertedDKm
+    this.kansen = this.kansen || target.kansen
+    this.local = this.local || target.local
+  }
+}
 const routeValidity = (calcArg: CalcArgument) => {
   const stations = calcArg.stations
   const lines = calcArg.lines
@@ -32,78 +60,83 @@ const routeValidity = (calcArg: CalcArgument) => {
     throw new ApplicationError('The route is not connected')
   }
 }
-const getDistance = (calcArg: CalcArgument): DistanceResponse => {
+const getDistance = (calcArg: CalcArgument): EdgeDistance[] => {
   const stations = calcArg.stations
   const lines = calcArg.lines
-  const result: DistanceResponse = {
-    operationDKm: 0,
-    convertedDKm: 0,
-    operationFareKm: 0,
-    convertedFareKm: 0,
-    companies: [],
-    kansen: false,
-    local: false
-  }
+  const result: EdgeDistance[] = []
+  let currentEdgeGroup: EdgeOwner[] = []
   for (let i = 0; i < lines.length; ++i) {
     const targetLine = lines[i]
     const startStationIndex = targetLine.stationIds.indexOf(stations[i].id)
     const endStationIndex = targetLine.stationIds.indexOf(stations[i + 1].id)
-    const subOperationdkm = Math.abs(targetLine.kms[startStationIndex] - targetLine.kms[endStationIndex])
-    result.operationDKm += subOperationdkm
-    if (targetLine.local) {
-      let subConverteddkm = Math.abs(targetLine.akms[startStationIndex] - targetLine.akms[endStationIndex])
-      result.convertedDKm += subConverteddkm
-      result.local = true
-    } else {
-      result.convertedDKm += subOperationdkm
-      result.kansen = true
+    const jAsc = startStationIndex < endStationIndex
+    for (
+      let j = startStationIndex + (jAsc ? 0 : -1);
+      jAsc ? j < endStationIndex : j >= endStationIndex;
+      jAsc ? j++ : j--
+    ) {
+      const edgeGroup = targetLine.edgeGroup[j]
+
+      if (currentEdgeGroup.join(':') !== edgeGroup.join(':')) {
+        result.push(new EdgeDistance(edgeGroup))
+        currentEdgeGroup = edgeGroup
+      }
+      const resultLast = result[result.length - 1]
+      const subOperationdkm = Math.abs(targetLine.kms[j] - targetLine.kms[j + 1])
+      resultLast.operationDKm += subOperationdkm
+      if (targetLine.local) {
+        let subConverteddkm = Math.abs(targetLine.akms[j] - targetLine.akms[j + 1])
+        resultLast.convertedDKm += subConverteddkm
+        resultLast.local = true
+      } else {
+        resultLast.convertedDKm += subOperationdkm
+        resultLast.kansen = true
+      }
     }
   }
-  // rough check
-  for (let station of stations) {
-    if (station.company.length === 1 && !result.companies.includes(station.company[0])) {
-      result.companies.push(station.company[0])
-    }
-  }
-  result.operationFareKm = Math.ceil(result.operationDKm / 10)
-  result.convertedFareKm = Math.ceil(result.convertedDKm / 10)
+
   return result
 }
 
 export const calc = (calcArg: CalcArgument): CalcResponse => {
   routeValidity(calcArg)
   const routeDistance = getDistance(calcArg)
+  const companies = routeDistance
+    .flatMap(ed => ed.companies)
+    .filter(c => JRCompanies.includes(c))
+    .filter((x, i, self) => self.indexOf(x) === i)
+  const hondoCompanies = companies.filter(c => [EdgeOwner.JRC, EdgeOwner.JRE, EdgeOwner.JRW].includes(c))
+  const resultDistanceResponse = new EdgeDistance(companies)
+  for (let rd of routeDistance) resultDistanceResponse.merge(rd)
+  resultDistanceResponse.companies = companies
+
   let resultFare = 0
-  if (
-    routeDistance.companies.includes(EdgeOwner.JRC) ||
-    routeDistance.companies.includes(EdgeOwner.JRE) ||
-    routeDistance.companies.includes(EdgeOwner.JRW)
-  ) {
-    if (routeDistance.kansen) {
-      resultFare = Fare.hondoKansen(routeDistance.convertedFareKm)
+  if (hondoCompanies.length > 0 && hondoCompanies.length === companies.length) {
+    if (resultDistanceResponse.kansen) {
+      resultFare = Fare.hondoKansen(resultDistanceResponse.convertedFareKm)
     } else {
-      resultFare = Fare.hondoLocal(routeDistance.operationFareKm)
+      resultFare = Fare.hondoLocal(resultDistanceResponse.operationFareKm)
     }
-  } else if (routeDistance.companies.includes(EdgeOwner.JRQ)) {
-    if (routeDistance.local) {
-      resultFare = Fare.kyushuLocal(routeDistance.convertedFareKm, routeDistance.operationFareKm)
+  } else if (resultDistanceResponse.companies.includes(EdgeOwner.JRQ)) {
+    if (resultDistanceResponse.local) {
+      resultFare = Fare.kyushuLocal(resultDistanceResponse.convertedFareKm, resultDistanceResponse.operationFareKm)
     } else {
-      resultFare = Fare.kyushuKansen(routeDistance.operationFareKm)
+      resultFare = Fare.kyushuKansen(resultDistanceResponse.operationFareKm)
     }
-  } else if (routeDistance.companies.includes(EdgeOwner.JRS)) {
-    if (routeDistance.local) {
-      resultFare = Fare.shikokuLocal(routeDistance.convertedFareKm, routeDistance.operationFareKm)
+  } else if (resultDistanceResponse.companies.includes(EdgeOwner.JRS)) {
+    if (resultDistanceResponse.local) {
+      resultFare = Fare.shikokuLocal(resultDistanceResponse.convertedFareKm, resultDistanceResponse.operationFareKm)
     } else {
-      resultFare = Fare.shikokuKansen(routeDistance.operationFareKm)
+      resultFare = Fare.shikokuKansen(resultDistanceResponse.operationFareKm)
     }
   } else {
     // JRH
-    if (routeDistance.kansen) {
-      resultFare = Fare.hokkaidoKansen(routeDistance.convertedFareKm)
+    if (resultDistanceResponse.kansen) {
+      resultFare = Fare.hokkaidoKansen(resultDistanceResponse.convertedFareKm)
     } else {
-      resultFare = Fare.hokkaidoLocal(routeDistance.operationFareKm)
+      resultFare = Fare.hokkaidoLocal(resultDistanceResponse.operationFareKm)
     }
   }
 
-  return { fare: resultFare, distanceResponse: routeDistance }
+  return { fare: resultFare, distanceResponse: resultDistanceResponse }
 }

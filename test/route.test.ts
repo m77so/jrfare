@@ -24,6 +24,9 @@ describe('Route/Hondo', () => {
     const lines = ['陸羽西', '陸羽東'].map(Main.getLineByName)
     const res = Route.calc({ stations: stations, lines: lines })
     assert.equal(res.distanceResponse.operationDKm, 1371)
+    assert.equal(res.distanceResponse.local, true)
+    assert.equal(res.distanceResponse.kansen, false)
+    assert.equal(res.distanceResponse.operationFareKm, 138)
     assert.equal(res.fare, 2590)
   })
   it('Kansen and Local', () => {
