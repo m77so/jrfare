@@ -43,6 +43,13 @@ describe('Route/Hondo', () => {
     assert.equal(res.distanceResponse.operationDKm, 31)
     assert.equal(res.fare, 160)
   })
+  it('OsakaLL', () => {
+    const stations = ['天王寺', '今宮', '西九条'].map(Main.getStationByName)
+    const lines = [Main.getLineByStationAndName('関西', '新今宮'), Main.getLineByName('大阪環状')]
+    const res = Route.calc({ stations: stations, lines: lines })
+    assert.equal(res.distanceResponse.operationDKm, 74)
+    assert.equal(res.fare, 180)
+  })
 })
 
 describe('Route/Kyushu', () => {

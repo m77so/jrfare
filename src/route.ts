@@ -47,6 +47,45 @@ class EdgeDistance {
     this.kansen = this.kansen || target.kansen
     this.local = this.local || target.local
   }
+  addOneSection(line: Line, startIndex: number) {
+    const subOperationdkm = Math.abs(line.kms[startIndex] - line.kms[startIndex + 1])
+    this.operationDKm += subOperationdkm
+    if (line.local) {
+      this.convertedDKm += Math.abs(line.akms[startIndex] - line.akms[startIndex + 1])
+      this.local = true
+    } else {
+      this.convertedDKm += subOperationdkm
+      this.kansen = true
+    }
+  }
+}
+class EdgeDistanceArray extends Array<EdgeDistance> {
+  get companies() {
+    return this.flatMap(ed => ed.companies)
+      .filter(c => JRCompanies.includes(c))
+      .filter((x, i, self) => self.indexOf(x) === i)
+  }
+  get intersectionEdgeOwner() {
+    return this.map(ed => ed.companies).reduce((p, c) => p.concat(c).filter((v, i, s) => s.indexOf(v) !== i))
+  }
+  get sumOperationDKm() {
+    return this.map(ed => ed.operationDKm).reduce((p, c) => p + c, 0)
+  }
+  get sumOperationFareKm() {
+    return Math.ceil(this.sumOperationDKm / 10)
+  }
+  get sumConvertedDKm() {
+    return this.map(ed => ed.convertedDKm).reduce((p, c) => p + c, 0)
+  }
+  get sumConvertedFareKm() {
+    return Math.ceil(this.sumConvertedDKm / 10)
+  }
+  get onlyKansen() {
+    return this.flatMap(ed => ed.kansen).filter(k => k === false).length === 0
+  }
+  get onlyLocal() {
+    return this.flatMap(ed => ed.local).filter(k => k === false).length === 0
+  }
 }
 const routeValidity = (calcArg: CalcArgument) => {
   const stations = calcArg.stations
@@ -60,10 +99,10 @@ const routeValidity = (calcArg: CalcArgument) => {
     throw new ApplicationError('The route is not connected')
   }
 }
-const getDistance = (calcArg: CalcArgument): EdgeDistance[] => {
+const getDistance = (calcArg: CalcArgument): EdgeDistanceArray => {
   const stations = calcArg.stations
   const lines = calcArg.lines
-  const result: EdgeDistance[] = []
+  const result = new EdgeDistanceArray()
   let currentEdgeGroup: EdgeOwner[] = []
   for (let i = 0; i < lines.length; ++i) {
     const targetLine = lines[i]
@@ -76,35 +115,33 @@ const getDistance = (calcArg: CalcArgument): EdgeDistance[] => {
       jAsc ? j++ : j--
     ) {
       const edgeGroup = targetLine.edgeGroup[j]
-
       if (currentEdgeGroup.join(':') !== edgeGroup.join(':')) {
         result.push(new EdgeDistance(edgeGroup))
         currentEdgeGroup = edgeGroup
       }
-      const resultLast = result[result.length - 1]
-      const subOperationdkm = Math.abs(targetLine.kms[j] - targetLine.kms[j + 1])
-      resultLast.operationDKm += subOperationdkm
-      if (targetLine.local) {
-        let subConverteddkm = Math.abs(targetLine.akms[j] - targetLine.akms[j + 1])
-        resultLast.convertedDKm += subConverteddkm
-        resultLast.local = true
-      } else {
-        resultLast.convertedDKm += subOperationdkm
-        resultLast.kansen = true
-      }
+      result[result.length - 1].addOneSection(targetLine, j)
     }
   }
-
   return result
 }
-
+const hondoCalc = (edgeDistances: EdgeDistanceArray): number => {
+  const intersectionEdgeOwner = edgeDistances.intersectionEdgeOwner
+  let result = 0
+  if (intersectionEdgeOwner.includes(EdgeOwner.TYOJY)) {
+    result = Fare.yamanote(edgeDistances.sumOperationFareKm)
+  } else if (intersectionEdgeOwner.includes(EdgeOwner.OSALL)) {
+    result = Fare.osakaKanjo(edgeDistances.sumOperationFareKm)
+  } else if (edgeDistances.onlyLocal) {
+    result = Fare.hondoLocal(edgeDistances.sumOperationFareKm)
+  } else {
+    result = Fare.hondoKansen(edgeDistances.sumConvertedFareKm)
+  }
+  return result
+}
 export const calc = (calcArg: CalcArgument): CalcResponse => {
   routeValidity(calcArg)
   const routeDistance = getDistance(calcArg)
-  const companies = routeDistance
-    .flatMap(ed => ed.companies)
-    .filter(c => JRCompanies.includes(c))
-    .filter((x, i, self) => self.indexOf(x) === i)
+  const companies = routeDistance.companies
   const hondoCompanies = companies.filter(c => [EdgeOwner.JRC, EdgeOwner.JRE, EdgeOwner.JRW].includes(c))
   const resultDistanceResponse = new EdgeDistance(companies)
   for (let rd of routeDistance) resultDistanceResponse.merge(rd)
@@ -112,11 +149,7 @@ export const calc = (calcArg: CalcArgument): CalcResponse => {
 
   let resultFare = 0
   if (hondoCompanies.length > 0 && hondoCompanies.length === companies.length) {
-    if (resultDistanceResponse.kansen) {
-      resultFare = Fare.hondoKansen(resultDistanceResponse.convertedFareKm)
-    } else {
-      resultFare = Fare.hondoLocal(resultDistanceResponse.operationFareKm)
-    }
+    resultFare = hondoCalc(routeDistance)
   } else if (resultDistanceResponse.companies.includes(EdgeOwner.JRQ)) {
     if (resultDistanceResponse.local) {
       resultFare = Fare.kyushuLocal(resultDistanceResponse.convertedFareKm, resultDistanceResponse.operationFareKm)
