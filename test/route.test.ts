@@ -50,6 +50,20 @@ describe('Route/Hondo', () => {
     assert.equal(res.distanceResponse.operationDKm, 74)
     assert.equal(res.fare, 180)
   })
+  it('TokyoSS', () => {
+    const stations = ['八王子', '西国分寺'].map(Main.getStationByName)
+    const lines = [Main.getLineByStationAndName('中央', '八王子')]
+    const res = Route.calc({ stations: stations, lines: lines })
+    assert.equal(res.distanceResponse.operationDKm, 146)
+    assert.equal(res.fare, 220)
+  })
+  it('OsakaSS', () => {
+    const stations = ['京都', '尼崎'].map(Main.getStationByName)
+    const lines = [Main.getLineByStationAndName('東海道', '京都')]
+    const res = Route.calc({ stations: stations, lines: lines })
+    assert.equal(res.distanceResponse.operationDKm, 505)
+    assert.equal(res.fare, 920)
+  })
 })
 
 describe('Route/Kyushu', () => {
@@ -77,5 +91,39 @@ describe('Route/Kyushu', () => {
     const res = Route.calc({ stations: stations, lines: lines })
     assert.equal(res.distanceResponse.operationDKm, 233)
     assert.equal(res.fare, 460)
+  })
+})
+
+describe('Route/Hokkaido', () => {
+  it('Only Kansen', () => {
+    const stations = ['長万部', '小樽'].map(Main.getStationByName)
+    const lines = ['函館'].map(Main.getLineByName)
+    const res = Route.calc({ stations: stations, lines: lines })
+    assert.equal(res.distanceResponse.operationDKm, 1402)
+    assert.equal(res.fare, 2810)
+  })
+  it('Local', () => {
+    const stations = ['留萌', '深川'].map(Main.getStationByName)
+    const lines = ['留萌'].map(Main.getLineByName)
+    const res = Route.calc({ stations: stations, lines: lines })
+    assert.equal(res.distanceResponse.operationDKm, 501)
+    assert.equal(res.fare, 1070)
+  })
+})
+
+describe('Route/Shikoku', () => {
+  it('Only Kansen', () => {
+    const stations = ['土佐山田', '琴平'].map(Main.getStationByName)
+    const lines = ['土讃'].map(Main.getLineByName)
+    const res = Route.calc({ stations: stations, lines: lines })
+    assert.equal(res.distanceResponse.operationDKm, 1000)
+    assert.equal(res.fare, 1810)
+  })
+  it('Local', () => {
+    const stations = ['徳島', '文化の森'].map(Main.getStationByName)
+    const lines = ['牟岐'].map(Main.getLineByName)
+    const res = Route.calc({ stations: stations, lines: lines })
+    assert.equal(res.distanceResponse.operationDKm, 39)
+    assert.equal(res.fare, 210)
   })
 })

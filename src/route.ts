@@ -80,9 +80,6 @@ class EdgeDistanceArray extends Array<EdgeDistance> {
   get sumConvertedFareKm() {
     return Math.ceil(this.sumConvertedDKm / 10)
   }
-  get onlyKansen() {
-    return this.flatMap(ed => ed.kansen).filter(k => k === false).length === 0
-  }
   get onlyLocal() {
     return this.flatMap(ed => ed.local).filter(k => k === false).length === 0
   }
@@ -131,6 +128,10 @@ const hondoCalc = (edgeDistances: EdgeDistanceArray): number => {
     result = Fare.yamanote(edgeDistances.sumOperationFareKm)
   } else if (intersectionEdgeOwner.includes(EdgeOwner.OSALL)) {
     result = Fare.osakaKanjo(edgeDistances.sumOperationFareKm)
+  } else if (intersectionEdgeOwner.includes(EdgeOwner.TYOSPC)) {
+    result = Fare.tokyoSpecificSection(edgeDistances.sumOperationFareKm)
+  } else if (intersectionEdgeOwner.includes(EdgeOwner.OSASPC)) {
+    result = Fare.osakaSpecificSection(edgeDistances.sumOperationFareKm)
   } else if (edgeDistances.onlyLocal) {
     result = Fare.hondoLocal(edgeDistances.sumOperationFareKm)
   } else {
