@@ -11,6 +11,8 @@ export class ApplicationError implements Error {
 }
 export function getStationsByName(stationName: string): Station[] {
   if (stationName === '') return data.stations
+  let stationId = data.stationNames.indexOf(stationName)
+  if (stationId > -1) return [data.stations[stationId]]
   return data.stations.filter(s => s.name.includes(stationName))
 }
 export function getStationByName(stationName: string): Station {
@@ -96,7 +98,6 @@ export const getCalcArg = (stationNames: string[], lineNames: string[]): Route.C
       }
     }
   }
-
   let result: Route.CalcArgument = { stations: [], lines: [] }
   for (let s of stations) {
     if (s !== null) {

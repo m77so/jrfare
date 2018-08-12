@@ -10,8 +10,12 @@ describe('ApplicationError', () => {
 })
 describe('getStationsByName', () => {
   it('include multiple stations', () => {
+    const res = main.getStationsByName('タウン')
+    assert.equal(res.length, 2)
+  })
+  it('if unique, one station', () => {
     const res = main.getStationsByName('諏訪')
-    assert.equal(res.length, 3)
+    assert.equal(res.length, 1)
   })
   it('include no stations', () => {
     const res = main.getStationsByName('れて')
@@ -83,10 +87,15 @@ describe('getCalcArg', () => {
     const res = main.getCalcArg(['金沢', '米原', '金山', '塩尻', '辰野'], ['北陸', '東海道', '中央', '中央'])
     assert.equal(res.lines[2].name, '中央西')
   })
-  it('invalid', () => {
+  it('invalid station', () => {
+    assert.throw(function() {
+      main.getCalcArg(['ハムスター', '米原', '金山', '塩尻', '辰野'], ['北陸', '東海道', '中央', '中央'])
+    }, 'invalid station')
+  })
+  it('invalid line', () => {
     assert.throw(function() {
       main.getCalcArg(['甲府', '米原', '金山', '塩尻', '辰野'], ['北陸', '東海道', '中央', '中央'])
-    }, 'invalid station')
+    }, 'invalid line')
   })
   it('曲芸', () => {
     const res = main.getCalcArg(['金', '米', '金山', '尻', '聖'], ['北', '海', '', ''])
