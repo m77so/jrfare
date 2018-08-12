@@ -194,6 +194,29 @@ const santoCalc = (edgeDistances: EdgeDistanceArray, company: ChihoJR): number =
   }
   return result
 }
+const calcCrossCompanyAdditionalFare = (routeDistance: EdgeDistanceArray): number => {
+  let result = 0
+  const additionalEdgeDistance: { [index in ChihoJR]: EdgeDistanceArray } = {
+    [EdgeOwner.JRQ]: new EdgeDistanceArray(),
+    [EdgeOwner.JRS]: new EdgeDistanceArray(),
+    [EdgeOwner.JRH]: new EdgeDistanceArray()
+  }
+  for (let rd of routeDistance) {
+    const chihoCompanies: ChihoJR[] = rd.companies.filter((c => (JRChihoCompanies as EdgeOwner[]).includes(c)) as ((
+      c: EdgeOwner
+    ) => c is ChihoJR))
+    if (chihoCompanies.length === 1) {
+      additionalEdgeDistance[chihoCompanies[0]].push(rd)
+    }
+  }
+  for (let chihoCompany of JRChihoCompanies) {
+    let targetEDs = additionalEdgeDistance[chihoCompany]
+    if (targetEDs.length > 0) {
+      result += santoCalc(targetEDs, chihoCompany) - hondoCalc(targetEDs)
+    }
+  }
+  return result
+}
 export const calc = (calcArg: CalcArgument): CalcResponse => {
   routeValidity(calcArg)
   const routeDistance = getDistance(calcArg)
@@ -217,25 +240,7 @@ export const calc = (calcArg: CalcArgument): CalcResponse => {
     resultFare = santoCalc(routeDistance, companies0)
   } else {
     // Cross company fare
-    const additionalEdgeDistance: { [index in ChihoJR]: EdgeDistanceArray } = {
-      [EdgeOwner.JRQ]: new EdgeDistanceArray(),
-      [EdgeOwner.JRS]: new EdgeDistanceArray(),
-      [EdgeOwner.JRH]: new EdgeDistanceArray()
-    }
-    for (let rd of routeDistance) {
-      const chihoCompanies: ChihoJR[] = rd.companies.filter((c => (JRChihoCompanies as EdgeOwner[]).includes(c)) as ((
-        c: EdgeOwner
-      ) => c is ChihoJR))
-      if (chihoCompanies.length === 1) {
-        additionalEdgeDistance[chihoCompanies[0]].push(rd)
-      }
-    }
-    for (let chihoCompany of JRChihoCompanies) {
-      let targetEDs = additionalEdgeDistance[chihoCompany]
-      if (targetEDs.length > 0) {
-        additionalFare += santoCalc(targetEDs, chihoCompany) - hondoCalc(targetEDs)
-      }
-    }
+    additionalFare += calcCrossCompanyAdditionalFare(routeDistance)
     resultFare = hondoCalc(routeDistance)
   }
   additionalFare += Fare.additionalFare(routeDistance.unionEdgeOwner())
