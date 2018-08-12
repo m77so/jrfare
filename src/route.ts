@@ -201,6 +201,19 @@ const calcCrossCompanyAdditionalFare = (routeDistance: EdgeDistanceArray): numbe
     [EdgeOwner.JRS]: new EdgeDistanceArray(),
     [EdgeOwner.JRH]: new EdgeDistanceArray()
   }
+  // Art85(2)ha
+  const edgeOwnerJRSADDX = routeDistance
+    .map(ed => ed.companies)
+    .filter(c => c.includes(EdgeOwner.JRSADDA) || c.includes(EdgeOwner.JRSADDB))
+    .map(c => c.includes(EdgeOwner.JRSADDA))
+
+  if (
+    edgeOwnerJRSADDX.length === routeDistance.length &&
+    edgeOwnerJRSADDX.filter((v, i, s) => s.indexOf(v) === i).length === 2
+  ) {
+    return 10
+  }
+
   for (let rd of routeDistance) {
     const chihoCompanies: ChihoJR[] = rd.companies.filter((c => (JRChihoCompanies as EdgeOwner[]).includes(c)) as ((
       c: EdgeOwner
@@ -228,7 +241,6 @@ export const calc = (calcArg: CalcArgument): CalcResponse => {
   const resultDistanceResponse = new EdgeDistance(companies)
   for (let rd of routeDistance) resultDistanceResponse.merge(rd)
   resultDistanceResponse.companies = companies
-
   let resultFare = 0
   let additionalFare = 0
   if (hondoCompanies.length > 0 && hondoCompanies.length === companies.length) {
@@ -245,5 +257,14 @@ export const calc = (calcArg: CalcArgument): CalcResponse => {
   }
   additionalFare += Fare.additionalFare(routeDistance.unionEdgeOwner())
   resultFare += additionalFare
+  if (calcArg.stations[0].name === '児島' || calcArg.stations[calcArg.stations.length - 1].name === '児島') {
+    if (routeDistance.unionEdgeOwner().includes(EdgeOwner.ADDSETO)) {
+      if (routeDistance.sumOperationFareKm <= 20) {
+        resultFare = 430
+      } else if (routeDistance.sumOperationFareKm <= 25) {
+        resultFare = 520
+      }
+    }
+  }
   return { fare: resultFare, distanceResponse: resultDistanceResponse }
 }

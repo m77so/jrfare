@@ -21,7 +21,9 @@ const ownerHash: { [key: string]: EdgeOwner } = {
   加算関空乙: EdgeOwner.ADDKIXB,
   加算瀬戸: EdgeOwner.ADDSETO,
   加算千歳: EdgeOwner.ADDCTS,
-  加算宮崎: EdgeOwner.ADDKMI
+  加算宮崎: EdgeOwner.ADDKMI,
+  四国加算甲: EdgeOwner.JRSADDA,
+  四国加算乙: EdgeOwner.JRSADDB
 }
 const output: OutputJSON = {
   lineNames: [],

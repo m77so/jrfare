@@ -53,7 +53,9 @@ export enum EdgeOwner {
   ADDKIXB,
   ADDSETO,
   ADDCTS,
-  ADDKMI
+  ADDKMI,
+  JRSADDA, // Art85(2)ha
+  JRSADDB // Art85(2)ha
 }
 export type ChihoJR = EdgeOwner.JRH | EdgeOwner.JRQ | EdgeOwner.JRS
 export type HondoJR = EdgeOwner.JRC | EdgeOwner.JRE | EdgeOwner.JRW
