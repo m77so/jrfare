@@ -1,5 +1,6 @@
 import data from './data.json'
 import { City, Line, Station } from './dataInterface'
+import * as Route from './route'
 import 'core-js'
 export class ApplicationError implements Error {
   public name = 'ApplicationError'
@@ -72,4 +73,44 @@ export const getLineByStationAndName = (lineName: string, stationName: string): 
   } else {
     throw new ApplicationError('Unknown Line')
   }
+}
+
+export const getCalcArg = (stationNames: string[], lineNames: string[]): Route.CalcArgument => {
+  if (stationNames.length !== lineNames.length + 1) throw new ApplicationError('Length is wrong')
+  const stationCanidates = stationNames.map(getStationsByName)
+  const lineCanidates = lineNames.map(getLinesByName)
+  let stations: (Station | null)[] = stationCanidates.map(s => (s.length === 1 ? s[0] : null))
+  let lines: (Line | null)[] = lineCanidates.map(l => (l.length === 1 ? l[0] : null))
+  for (let i = 0; i < lines.length; ++i) {
+    if (stations[i] === null || lines[i] === null || stations[i + 1] === null) {
+      l1: for (let s1 of stationCanidates[i]) {
+        for (let l1 of lineCanidates[i]) {
+          for (let s2 of stationCanidates[i + 1]) {
+            if (l1.stationIds.includes(s1.id) && l1.stationIds.includes(s2.id)) {
+              ;[stations[i], lines[i], stations[i + 1]] = [s1, l1, s2]
+              ;[stationCanidates[i], lineCanidates[i], stationCanidates[i + 1]] = [[s1], [l1], [s2]]
+              break l1
+            }
+          }
+        }
+      }
+    }
+  }
+
+  let result: Route.CalcArgument = { stations: [], lines: [] }
+  for (let s of stations) {
+    if (s !== null) {
+      result.stations.push(s)
+    } else {
+      throw new ApplicationError('invalid station')
+    }
+  }
+  for (let l of lines) {
+    if (l !== null) {
+      result.lines.push(l)
+    } else {
+      throw new ApplicationError('invalid line')
+    }
+  }
+  return result
 }

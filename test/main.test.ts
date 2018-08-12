@@ -78,3 +78,18 @@ describe('getLineByStationAndName', () => {
     }, 'Unknown Line')
   })
 })
+describe('getCalcArg', () => {
+  it('direct', () => {
+    const res = main.getCalcArg(['金沢', '米原', '金山', '塩尻', '辰野'], ['北陸', '東海道', '中央', '中央'])
+    assert.equal(res.lines[2].name, '中央西')
+  })
+  it('invalid', () => {
+    assert.throw(function() {
+      main.getCalcArg(['甲府', '米原', '金山', '塩尻', '辰野'], ['北陸', '東海道', '中央', '中央'])
+    }, 'invalid station')
+  })
+  it('曲芸', () => {
+    const res = main.getCalcArg(['金', '米', '金山', '尻', '聖'], ['北', '海', '', ''])
+    assert.equal(res.lines[2].name, '中央西')
+  })
+})
