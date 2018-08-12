@@ -1,4 +1,3 @@
-import data from './data.json'
 import {
   Line,
   Station,
@@ -30,7 +29,6 @@ interface DistanceResponse {
   kansen: boolean
   local: boolean
 }
-interface EdgeDistanceInterface {}
 class EdgeDistance {
   companies: EdgeOwner[]
   operationDKm: number
@@ -120,8 +118,7 @@ const routeValidity = (calcArg: CalcArgument) => {
   }
 }
 const getDistance = (calcArg: CalcArgument): EdgeDistanceArray => {
-  const stations = calcArg.stations
-  const lines = calcArg.lines
+  const [stations, lines] = [calcArg.stations, calcArg.lines]
   const result = new EdgeDistanceArray()
   for (let i = 0; i < lines.length; ++i) {
     const targetLine = lines[i]
@@ -169,7 +166,6 @@ const hondoCalc = (edgeDistances: EdgeDistanceArray): number => {
 }
 const santoCalc = (edgeDistances: EdgeDistanceArray, company: ChihoJR): number => {
   let result = 0
-
   type LocalFunctionType = ((a1: number, a2: number) => number)
   type KansenFunctionType = (a1: number) => number
   let localFunction: LocalFunctionType
@@ -230,6 +226,18 @@ const calcCrossCompanyAdditionalFare = (routeDistance: EdgeDistanceArray): numbe
   }
   return result
 }
+const applyArt85no3 = (resultFare: number, stations: Station[], routeDistance: EdgeDistanceArray): number => {
+  if ([stations[0].name, stations[stations.length - 1].name].includes('児島')) {
+    if (routeDistance.unionEdgeOwner().includes(EdgeOwner.ADDSETO)) {
+      if (routeDistance.sumOperationFareKm <= 20) {
+        resultFare = 430
+      } else if (routeDistance.sumOperationFareKm <= 25) {
+        resultFare = 520
+      }
+    }
+  }
+  return resultFare
+}
 export const calc = (calcArg: CalcArgument): CalcResponse => {
   routeValidity(calcArg)
   const routeDistance = getDistance(calcArg)
@@ -241,15 +249,11 @@ export const calc = (calcArg: CalcArgument): CalcResponse => {
   const resultDistanceResponse = new EdgeDistance(companies)
   for (let rd of routeDistance) resultDistanceResponse.merge(rd)
   resultDistanceResponse.companies = companies
-  let resultFare = 0
-  let additionalFare = 0
+  let [resultFare, additionalFare] = [0, 0]
   if (hondoCompanies.length > 0 && hondoCompanies.length === companies.length) {
     resultFare = hondoCalc(routeDistance)
-  } else if (
-    hondoCompanies.length === 0 &&
-    (companies0 === EdgeOwner.JRQ || companies0 === EdgeOwner.JRS || companies0 === EdgeOwner.JRH)
-  ) {
-    resultFare = santoCalc(routeDistance, companies0)
+  } else if (hondoCompanies.length === 0 && (JRChihoCompanies as GroupJR[]).includes(companies0)) {
+    resultFare = santoCalc(routeDistance, companies0 as ChihoJR)
   } else {
     // Cross company fare
     additionalFare += calcCrossCompanyAdditionalFare(routeDistance)
@@ -257,14 +261,7 @@ export const calc = (calcArg: CalcArgument): CalcResponse => {
   }
   additionalFare += Fare.additionalFare(routeDistance.unionEdgeOwner())
   resultFare += additionalFare
-  if (calcArg.stations[0].name === '児島' || calcArg.stations[calcArg.stations.length - 1].name === '児島') {
-    if (routeDistance.unionEdgeOwner().includes(EdgeOwner.ADDSETO)) {
-      if (routeDistance.sumOperationFareKm <= 20) {
-        resultFare = 430
-      } else if (routeDistance.sumOperationFareKm <= 25) {
-        resultFare = 520
-      }
-    }
-  }
+  // Art85-3
+  resultFare = applyArt85no3(resultFare, calcArg.stations, routeDistance)
   return { fare: resultFare, distanceResponse: resultDistanceResponse }
 }
