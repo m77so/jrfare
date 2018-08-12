@@ -50,8 +50,19 @@ export enum EdgeOwner {
   KIJSBB,
   SDJSBB
 }
-
-export const JRCompanies = [EdgeOwner.JRH, EdgeOwner.JRQ, EdgeOwner.JRS, EdgeOwner.JRC, EdgeOwner.JRE, EdgeOwner.JRW]
+export type ChihoJR = EdgeOwner.JRH | EdgeOwner.JRQ | EdgeOwner.JRS
+export type HondoJR = EdgeOwner.JRC | EdgeOwner.JRE | EdgeOwner.JRW
+export type GroupJR = ChihoJR | HondoJR
+export const JRCompanies = [
+  EdgeOwner.JRH,
+  EdgeOwner.JRQ,
+  EdgeOwner.JRS,
+  EdgeOwner.JRC,
+  EdgeOwner.JRE,
+  EdgeOwner.JRW
+] as GroupJR[]
+export const JRHondoCompanies = [EdgeOwner.JRE, EdgeOwner.JRC, EdgeOwner.JRW] as HondoJR[]
+export const JRChihoCompanies = [EdgeOwner.JRH, EdgeOwner.JRS, EdgeOwner.JRQ] as ChihoJR[]
 export interface FareTable {
   km: number[]
   fare: number[]

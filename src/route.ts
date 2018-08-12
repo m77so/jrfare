@@ -1,5 +1,15 @@
 import data from './data.json'
-import { City, Line, Station, EdgeOwner, JRCompanies } from './dataInterface'
+import {
+  Line,
+  Station,
+  EdgeOwner,
+  JRCompanies,
+  JRChihoCompanies,
+  JRHondoCompanies,
+  ChihoJR,
+  HondoJR,
+  GroupJR
+} from './dataInterface'
 import { ApplicationError } from './main'
 import * as Fare from './fare'
 export interface CalcArgument {
@@ -41,7 +51,7 @@ class EdgeDistance {
     this.local = false
   }
   merge(target: EdgeDistance) {
-    this.companies.concat(target.companies).filter((x, i, self) => self.indexOf(x) === i)
+    this.companies = this.companies.concat(target.companies).filter((x, i, self) => self.indexOf(x) === i)
     this.operationDKm += target.operationDKm
     this.convertedDKm += target.convertedDKm
     this.kansen = this.kansen || target.kansen
@@ -62,7 +72,7 @@ class EdgeDistance {
 class EdgeDistanceArray extends Array<EdgeDistance> {
   get companies() {
     return this.flatMap(ed => ed.companies)
-      .filter(c => JRCompanies.includes(c))
+      .filter((c => (JRCompanies as EdgeOwner[]).includes(c)) as ((c: EdgeOwner) => c is GroupJR))
       .filter((x, i, self) => self.indexOf(x) === i)
   }
   get intersectionEdgeOwner() {
@@ -80,8 +90,14 @@ class EdgeDistanceArray extends Array<EdgeDistance> {
   get sumConvertedFareKm() {
     return Math.ceil(this.sumConvertedDKm / 10)
   }
+  private flatmapOnly(arg: (ed: EdgeDistance) => boolean) {
+    return this.flatMap(arg).filter(k => k === false).length === 0
+  }
   get onlyLocal() {
-    return this.flatMap(ed => ed.local).filter(k => k === false).length === 0
+    return this.flatmapOnly(ed => ed.local)
+  }
+  get onlyKansen() {
+    return this.flatmapOnly(ed => ed.kansen)
   }
 }
 const routeValidity = (calcArg: CalcArgument) => {
@@ -139,38 +155,74 @@ const hondoCalc = (edgeDistances: EdgeDistanceArray): number => {
   }
   return result
 }
+const chihoCalc = (edgeDistances: EdgeDistanceArray, company: ChihoJR): number => {
+  let result = 0
+
+  if (company === EdgeOwner.JRQ || company === EdgeOwner.JRS) {
+    type LocalFunctionType = ((a1: number, a2: number) => number)
+    type KansenFunctionType = (a1: number) => number
+    let localFunction: LocalFunctionType = company === EdgeOwner.JRQ ? Fare.kyushuLocal : Fare.shikokuLocal
+    let kansenFunction: KansenFunctionType = company === EdgeOwner.JRQ ? Fare.kyushuKansen : Fare.shikokuKansen
+    if (edgeDistances.onlyKansen) {
+      result = kansenFunction(edgeDistances.sumOperationFareKm)
+    } else {
+      result = localFunction(edgeDistances.sumConvertedFareKm, edgeDistances.sumOperationFareKm)
+    }
+  } else if (company === EdgeOwner.JRH) {
+    if (edgeDistances.onlyLocal) {
+      result = Fare.hokkaidoLocal(edgeDistances.sumOperationFareKm)
+    } else {
+      result = Fare.hokkaidoKansen(edgeDistances.sumConvertedFareKm)
+    }
+  } else {
+    throw new ApplicationError('company should be chiho companies.')
+  }
+  return result
+}
 export const calc = (calcArg: CalcArgument): CalcResponse => {
   routeValidity(calcArg)
   const routeDistance = getDistance(calcArg)
   const companies = routeDistance.companies
-  const hondoCompanies = companies.filter(c => [EdgeOwner.JRC, EdgeOwner.JRE, EdgeOwner.JRW].includes(c))
+  const hondoCompanies = companies.filter((c => (JRHondoCompanies as GroupJR[]).includes(c)) as ((
+    c: GroupJR
+  ) => c is HondoJR))
+  const companies0 = companies[0]
   const resultDistanceResponse = new EdgeDistance(companies)
   for (let rd of routeDistance) resultDistanceResponse.merge(rd)
   resultDistanceResponse.companies = companies
 
   let resultFare = 0
+  let additionalFare = 0
   if (hondoCompanies.length > 0 && hondoCompanies.length === companies.length) {
     resultFare = hondoCalc(routeDistance)
-  } else if (resultDistanceResponse.companies.includes(EdgeOwner.JRQ)) {
-    if (resultDistanceResponse.local) {
-      resultFare = Fare.kyushuLocal(resultDistanceResponse.convertedFareKm, resultDistanceResponse.operationFareKm)
-    } else {
-      resultFare = Fare.kyushuKansen(resultDistanceResponse.operationFareKm)
-    }
-  } else if (resultDistanceResponse.companies.includes(EdgeOwner.JRS)) {
-    if (resultDistanceResponse.local) {
-      resultFare = Fare.shikokuLocal(resultDistanceResponse.convertedFareKm, resultDistanceResponse.operationFareKm)
-    } else {
-      resultFare = Fare.shikokuKansen(resultDistanceResponse.operationFareKm)
-    }
+  } else if (
+    hondoCompanies.length === 0 &&
+    (companies0 === EdgeOwner.JRQ || companies0 === EdgeOwner.JRS || companies0 === EdgeOwner.JRH)
+  ) {
+    resultFare = chihoCalc(routeDistance, companies0)
   } else {
-    // JRH
-    if (resultDistanceResponse.kansen) {
-      resultFare = Fare.hokkaidoKansen(resultDistanceResponse.convertedFareKm)
-    } else {
-      resultFare = Fare.hokkaidoLocal(resultDistanceResponse.operationFareKm)
+    // Cross company fare
+    const additionalEdgeDistance: { [index in ChihoJR]: EdgeDistanceArray } = {
+      [EdgeOwner.JRQ]: new EdgeDistanceArray(),
+      [EdgeOwner.JRS]: new EdgeDistanceArray(),
+      [EdgeOwner.JRH]: new EdgeDistanceArray()
     }
+    for (let rd of routeDistance) {
+      const chihoCompanies: ChihoJR[] = rd.companies.filter((c => (JRChihoCompanies as EdgeOwner[]).includes(c)) as ((
+        c: EdgeOwner
+      ) => c is ChihoJR))
+      if (chihoCompanies.length === 1) {
+        additionalEdgeDistance[chihoCompanies[0]].push(rd)
+      }
+    }
+    for (let chihoCompany of JRChihoCompanies) {
+      let targetEDs = additionalEdgeDistance[chihoCompany]
+      if (targetEDs.length > 0) {
+        additionalFare += chihoCalc(targetEDs, chihoCompany) - hondoCalc(targetEDs)
+      }
+    }
+    resultFare = hondoCalc(routeDistance)
   }
-
+  resultFare += additionalFare
   return { fare: resultFare, distanceResponse: resultDistanceResponse }
 }

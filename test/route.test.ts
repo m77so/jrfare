@@ -127,3 +127,13 @@ describe('Route/Shikoku', () => {
     assert.equal(res.fare, 210)
   })
 })
+
+describe('Route/Honshu-Kyushu', () => {
+  it('Only Kansen', () => {
+    const stations = ['小野田', '門司', '教育大前'].map(Main.getStationByName)
+    const lines = [Main.getLineByStationAndName('山陽', '下関'), Main.getLineByStationAndName('鹿児島', '八幡')]
+    const res = Route.calc({ stations: stations, lines: lines })
+    assert.equal(res.distanceResponse.operationDKm, 855)
+    assert.equal(res.fare, 1590)
+  })
+})
