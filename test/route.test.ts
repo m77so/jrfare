@@ -137,3 +137,34 @@ describe('Route/Honshu-Kyushu', () => {
     assert.equal(res.fare, 1590)
   })
 })
+
+describe('Route/AdditionalFare', () => {
+  it('りんくうタウン~', () => {
+    const stations = ['りんくうタウン', '日根野', '和歌山', '白浜'].map(Main.getStationByName)
+    const lines = ['関西空港', '阪和', '紀勢'].map(Main.getLineByName)
+    const res = Route.calc({ stations: stations, lines: lines })
+    assert.equal(res.distanceResponse.operationDKm, 1361)
+    assert.equal(res.fare, 2420)
+  })
+  it('関西空港~', () => {
+    const stations = ['関西空港', '日根野', '和泉府中'].map(Main.getStationByName)
+    const lines = ['関西空港', '阪和'].map(Main.getLineByName)
+    const res = Route.calc({ stations: stations, lines: lines })
+    assert.equal(res.distanceResponse.operationDKm, 251)
+    assert.equal(res.fare, 720)
+  })
+  it('関西空港~りんくうタウン', () => {
+    const stations = ['関西空港', 'りんくうタウン'].map(Main.getStationByName)
+    const lines = ['関西空港'].map(Main.getLineByName)
+    const res = Route.calc({ stations: stations, lines: lines })
+    assert.equal(res.distanceResponse.operationDKm, 69)
+    assert.equal(res.fare, 370)
+  })
+  it('新千歳空港', () => {
+    const stations = ['新千歳空港', '南千歳', '北広島'].map(Main.getStationByName)
+    const lines = [Main.getLineByStationAndName('千歳', '新千歳空港'), Main.getLineByStationAndName('千歳', '北広島')]
+    const res = Route.calc({ stations: stations, lines: lines })
+    assert.equal(res.distanceResponse.operationDKm, 248)
+    assert.equal(res.fare, 590)
+  })
+})

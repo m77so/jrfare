@@ -70,14 +70,18 @@ class EdgeDistance {
   }
 }
 class EdgeDistanceArray extends Array<EdgeDistance> {
+  unionEdgeOwner() {
+    return this.flatMap(ed => ed.companies).filter((x, i, self) => self.indexOf(x) === i)
+  }
   get companies() {
-    return this.flatMap(ed => ed.companies)
-      .filter((c => (JRCompanies as EdgeOwner[]).includes(c)) as ((c: EdgeOwner) => c is GroupJR))
-      .filter((x, i, self) => self.indexOf(x) === i)
+    return this.unionEdgeOwner().filter((c => (JRCompanies as EdgeOwner[]).includes(c)) as ((
+      c: EdgeOwner
+    ) => c is GroupJR))
   }
   get intersectionEdgeOwner() {
     return this.map(ed => ed.companies).reduce((p, c) => p.concat(c).filter((v, i, s) => s.indexOf(v) !== i))
   }
+
   get sumOperationDKm() {
     return this.map(ed => ed.operationDKm).reduce((p, c) => p + c, 0)
   }
@@ -223,6 +227,7 @@ export const calc = (calcArg: CalcArgument): CalcResponse => {
     }
     resultFare = hondoCalc(routeDistance)
   }
+  additionalFare += Fare.additionalFare(routeDistance.unionEdgeOwner())
   resultFare += additionalFare
   return { fare: resultFare, distanceResponse: resultDistanceResponse }
 }

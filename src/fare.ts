@@ -192,3 +192,29 @@ export const tokyoSpecificSection = function(km: number): number {
 export const osakaSpecificSection = function(km: number): number {
   return kansenSuper(km, null, [120, 160, 180], [300, 600, 9999], [1530, 1215, 9999999])
 }
+
+export const additionalFare = function(eo: dataInterface.EdgeOwner[]): number {
+  let result = 0
+  eo = eo.filter(c => dataInterface.AdditionalFareSection.includes(c))
+  if (eo.length === 0) return result
+  const EdgeOwner = dataInterface.EdgeOwner
+  if (eo.includes(EdgeOwner.ADDCTS)) {
+    result += 140
+  }
+  if (eo.includes(EdgeOwner.ADDSETO)) {
+    result += 100
+  }
+  if (eo.includes(EdgeOwner.ADDKMI)) {
+    result += 120
+  }
+  if (eo.includes(EdgeOwner.ADDKIXA)) {
+    if (eo.includes(EdgeOwner.ADDKIXB)) {
+      result += 220
+    } else {
+      result += 150
+    }
+  } else if (eo.includes(EdgeOwner.ADDKIXB)) {
+    result += 170
+  }
+  return result
+}

@@ -16,7 +16,12 @@ const ownerHash: { [key: string]: EdgeOwner } = {
   大阪環: EdgeOwner.OSALL,
   福岡近: EdgeOwner.FUKSBB,
   新潟近: EdgeOwner.KIJSBB,
-  仙台近: EdgeOwner.SDJSBB
+  仙台近: EdgeOwner.SDJSBB,
+  加算関空甲: EdgeOwner.ADDKIXA,
+  加算関空乙: EdgeOwner.ADDKIXB,
+  加算瀬戸: EdgeOwner.ADDSETO,
+  加算千歳: EdgeOwner.ADDCTS,
+  加算宮崎: EdgeOwner.ADDKMI
 }
 const output: OutputJSON = {
   lineNames: [],
