@@ -36,6 +36,13 @@ describe('Route/Hondo', () => {
     assert.equal(res.distanceResponse.operationDKm, 1524)
     assert.equal(res.fare, 3020)
   })
+  it('Kansen and Local <10km', () => {
+    const stations = ['日岡', '加古川', '東加古川'].map(Main.getStationByName)
+    const lines = ['加古川', '山陽'].map(Main.getLineByName)
+    const res = Route.calc({ stations: stations, lines: lines })
+    assert.equal(res.distanceResponse.operationDKm, 59)
+    assert.equal(res.fare, 190)
+  })
   it('Yamanote', () => {
     const stations = ['渋谷', '目黒'].map(Main.getStationByName)
     const lines = [Main.getLineByStationAndName('山手', '目黒')]
@@ -135,6 +142,15 @@ describe('Route/Honshu-Kyushu', () => {
     const res = Route.calc({ stations: stations, lines: lines })
     assert.equal(res.distanceResponse.operationDKm, 855)
     assert.equal(res.fare, 1590)
+  })
+})
+describe('Route/Honshu-Shikoku', () => {
+  it('Local and Kansen', () => {
+    const stations = ['穴吹', '佃', '多度津', '宇多津', '茶屋町', '岡山'].map(Main.getStationByName)
+    const lines = ['徳島', '土讃', '予讃', '本四備讃', '宇野'].map(Main.getLineByName)
+    const res = Route.calc({ stations: stations, lines: lines })
+    assert.equal(res.distanceResponse.operationDKm, 1218)
+    assert.equal(res.fare, 2520)
   })
 })
 

@@ -161,7 +161,44 @@ export const shikokuLocal = function(convertedKm: number, operationKm: number): 
 export const kyushuLocal = function(convertedKm: number, operationKm: number): number {
   return jrsjrqLocal(convertedKm, operationKm, data.appendixFare.JRSJRQlocal.JRQFare, kyushuKansen)
 }
-
+// Article 81,84
+const hondojrhCross = (
+  convertedKm: number,
+  operationKm: number,
+  localFunction: (km: number) => number,
+  kansenFunction: (km: number) => number
+): number => {
+  if (operationKm <= 10) {
+    return localFunction(operationKm)
+  } else {
+    return kansenFunction(convertedKm)
+  }
+}
+export const hondoCross = (convertedKm: number, operationKm: number): number => {
+  return hondojrhCross(convertedKm, operationKm, hondoLocal, hondoKansen)
+}
+export const hokkaidoCross = (convertedKm: number, operationKm: number): number => {
+  return hondojrhCross(convertedKm, operationKm, hokkaidoLocal, hokkaidoKansen)
+}
+const jrsjrqCross = (
+  convertedKm: number,
+  operationKm: number,
+  kansenFunction: (km: number) => number,
+  art84no2: number[]
+): number => {
+  if (operationKm === 3 && convertedKm === 4) {
+    return art84no2[0]
+  } else if (operationKm === 10 && convertedKm === 11) {
+    return art84no2[1]
+  }
+  return kansenFunction(convertedKm)
+}
+export const shikokuCross = (convertedKm: number, operationKm: number): number => {
+  return jrsjrqCross(convertedKm, operationKm, shikokuKansen, [160, 230])
+}
+export const kyushuCross = (convertedKm: number, operationKm: number): number => {
+  return jrsjrqCross(convertedKm, operationKm, kyushuKansen, [180, 250])
+}
 const tokyoSpecificSectionSuper = function(
   km: number,
   art84: number[],
