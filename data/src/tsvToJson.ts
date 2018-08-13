@@ -23,7 +23,25 @@ const ownerHash: { [key: string]: EdgeOwner } = {
   加算千歳: EdgeOwner.ADDCTS,
   加算宮崎: EdgeOwner.ADDKMI,
   四国加算甲: EdgeOwner.JRSADDA,
-  四国加算乙: EdgeOwner.JRSADDB
+  四国加算乙: EdgeOwner.JRSADDB,
+  特定短絡函館: EdgeOwner.SHORTHKD,
+  特定短絡対函館: EdgeOwner.SHORUHKD,
+  特定短絡日暮里: EdgeOwner.SHORTNPR,
+  特定短絡対日暮里: EdgeOwner.SHORUNPR,
+  特定短絡大宮: EdgeOwner.SHORTOMY,
+  特定短絡対大宮: EdgeOwner.SHORUOMY,
+  特定短絡鶴見: EdgeOwner.SHORTTRM,
+  特定短絡対鶴見: EdgeOwner.SHORUTRM,
+  特定短絡京葉: EdgeOwner.SHORTJE,
+  特定短絡対京葉: EdgeOwner.SHORUJE,
+  特定短絡湖西: EdgeOwner.SHORTKB,
+  特定短絡対湖西: EdgeOwner.SHORUKB,
+  特定短絡大阪: EdgeOwner.SHORTKO,
+  特定短絡対大阪: EdgeOwner.SHORUKO,
+  特定短絡呉: EdgeOwner.SHORTKRE,
+  特定短絡対呉: EdgeOwner.SHORUKRE,
+  特定短絡岩国: EdgeOwner.SHORTIWK,
+  特定短絡対岩国: EdgeOwner.SHORUIWK
 }
 const output: OutputJSON = {
   lineNames: [],
@@ -39,9 +57,12 @@ const output: OutputJSON = {
     JRHlocal: { km: [], fare: [] },
     JRSJRQlocal: { operatingKm: [], convertedKm: [], JRQFare: [], JRSFare: [] }
   },
-  localDistance: []
+  localDistance: [],
+  mapRoute: [],
+  edgeOwnersLength: Object.keys(EdgeOwner)
+    .filter(k => typeof EdgeOwner[k as any] === 'number')
+    .map(v => 0)
 }
-
 const tsvLines = fs.readFileSync(path.join(__dirname, '..', 'resource', 'lines.tsv'), 'utf8').split('\n')
 const tsvStations = fs.readFileSync(path.join(__dirname, '..', 'resource', 'stations.tsv'), 'utf8').split('\n')
 const tsvDistances = fs.readFileSync(path.join(__dirname, '..', 'resource', 'distances.tsv'), 'utf8').split('\n')
@@ -136,21 +157,59 @@ const addCompanyToStation = (stationId: number, company: EdgeOwner) => {
   const c = output.stations[stationId].company
   if (c.indexOf(company) === -1) c.push(company)
 }
-// tsvファイルを行ごとに処理する
-const tsvCompany = fs.readFileSync(path.join(__dirname, '..', 'resource', 'company.tsv'), 'utf8').split('\n')
-for (let l of tsvCompany) {
-  let lineName = ''
-  let value = ''
-  ;[lineName, value] = l.split('\t')
-  const lines = output.lines
+const getLines = (lineName: string): Line[] => {
+  return output.lines
     .filter(l => l.name.includes(lineName))
     .filter(l => l.name.includes('新幹線') === lineName.includes('新幹線'))
+}
+// tsvファイルを行ごとに処理する
+const tsvCompany = fs.readFileSync(path.join(__dirname, '..', 'resource', 'company.tsv'), 'utf8').split('\n')
+
+const tsvMapRoute = fs.readFileSync(path.join(__dirname, '..', 'resource', 'mapRoute.tsv'), 'utf8').split('\n')
+
+for (let l of tsvMapRoute) {
+  let [shortname, value] = l.split('\t')
+  let valueArr = value.split(',')
+  // 区間に依って会社が違う
+  let stations = valueArr.filter((v, i) => i % 2 === 0)
+  let lines = valueArr.filter((v, i) => i % 2 === 1).map(getLines)
+  let resStations = []
+  let resLines = []
+  for (let i = 0; i < lines.length; ++i) {
+    let line = lines[i].filter(l => l.stations.includes(stations[i]) && l.stations.includes(stations[i + 1]))
+    if (line.length !== 1) continue
+    resLines.push(line[0].id)
+    resStations.push(line[0].stationIds[line[0].stations.indexOf(stations[i])])
+    if (i === lines.length - 1) {
+      resStations.push(line[0].stationIds[line[0].stations.indexOf(stations[i + 1])])
+    }
+  }
+  let shortEdgeOwner = ownerHash[shortname]
+  output.mapRoute.push({
+    id: shortEdgeOwner,
+    stationIds: resStations,
+    lineIds: resLines
+  })
+  // tsvCompanyに強引に特定短絡対を追加する．
+  const counterShortName = shortname.slice(0, 4) + '対' + shortname.slice(4)
+  for (let i = 0; i < lines.length; ++i) {
+    tsvCompany.push(
+      `${output.lineNames[resLines[i]]}\t${output.stationNames[resStations[i]]},${counterShortName},${
+        output.stationNames[resStations[i + 1]]
+      }`
+    )
+  }
+}
+for (let l of tsvCompany) {
+  let [lineName, value] = l.split('\t')
+  const lines = getLines(lineName)
   let valueArr = value.split(',')
   if (valueArr.length === 1) {
     // 全線が同一会社
     const company = ownerHash[value]
     for (let line of lines) {
       for (let lineEdgeGroupElem of line.edgeGroup) {
+        output.edgeOwnersLength[company]++
         lineEdgeGroupElem.push(company)
       }
       for (let stationID of line.stationIds) {
@@ -181,6 +240,7 @@ for (let l of tsvCompany) {
         addCompanyToStation(line.stationIds[i], ownerHash[companies[needle - 1]])
         needle++
       }
+      output.edgeOwnersLength[ownerHash[companies[needle - 1]]]++
       line.edgeGroup[i].push(ownerHash[companies[needle - 1]])
       addCompanyToStation(line.stationIds[i], ownerHash[companies[needle - 1]])
     }

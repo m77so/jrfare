@@ -7,10 +7,13 @@ import {
   JRHondoCompanies,
   ChihoJR,
   HondoJR,
-  GroupJR
+  GroupJR,
+  ShortRouteSection,
+  ShortRouteSectionPair
 } from './dataInterface'
 import { ApplicationError } from './main'
 import * as Fare from './fare'
+import data from './data.json'
 export interface CalcArgument {
   stations: Station[]
   lines: Line[]
@@ -33,6 +36,7 @@ class EdgeDistance {
   companies: EdgeOwner[]
   operationDKm: number
   convertedDKm: number
+  edgeLength: number
   get operationFareKm() {
     return Math.ceil(this.operationDKm / 10)
   }
@@ -45,8 +49,19 @@ class EdgeDistance {
     this.companies = companies
     this.operationDKm = 0
     this.convertedDKm = 0
+    this.edgeLength = 0
     this.kansen = false
     this.local = false
+  }
+  clone() {
+    const clone = new EdgeDistance(this.companies)
+    clone.operationDKm = this.operationDKm
+    clone.operationDKm = this.operationDKm
+    clone.convertedDKm = this.convertedDKm
+    clone.edgeLength = this.edgeLength
+    clone.kansen = this.kansen
+    clone.local = this.local
+    return clone
   }
   merge(target: EdgeDistance) {
     this.companies = this.companies.concat(target.companies).filter((x, i, self) => self.indexOf(x) === i)
@@ -58,6 +73,7 @@ class EdgeDistance {
   addOneSection(line: Line, startIndex: number) {
     const subOperationdkm = Math.abs(line.kms[startIndex] - line.kms[startIndex + 1])
     this.operationDKm += subOperationdkm
+    this.edgeLength++
     if (line.local) {
       this.convertedDKm += Math.abs(line.akms[startIndex] - line.akms[startIndex + 1])
       this.local = true
@@ -104,6 +120,50 @@ class EdgeDistanceArray extends Array<EdgeDistance> {
   get onlyKansen() {
     return this.flatmapOnly(ed => ed.kansen)
   }
+  clone() {
+    return this.map(e => e.clone())
+  }
+  applyArt69() {
+    let genEdgeOwnerShorts = () =>
+      this.map(ed => {
+        const s = ed.companies.filter(c => ShortRouteSection.concat(ShortRouteSectionPair).includes(c))
+        return s.length === 1 ? s[0] : null
+      })
+    let edgeOwnerShorts = genEdgeOwnerShorts()
+    if (edgeOwnerShorts.filter(c => c !== null).length === 0) return
+
+    for (let targetShortSection of ShortRouteSection) {
+      const onlyTargetEdgeOwnerShorts = genEdgeOwnerShorts().map(
+        c => (c === targetShortSection || c === targetShortSection + 1 ? c : null)
+      )
+      if (onlyTargetEdgeOwnerShorts.filter(c => c !== null).length === 0) continue
+      for (let i = 0; i < onlyTargetEdgeOwnerShorts.length; ++i) {
+        let cnt = 0
+        let previ = i > 0 ? i - 1 : i
+        let ii = i
+        let arrCnt = 0
+        while (i < onlyTargetEdgeOwnerShorts.length && onlyTargetEdgeOwnerShorts[i] === targetShortSection) {
+          cnt += this[i++].edgeLength
+          arrCnt++
+        }
+        if (ii !== i) --i
+        let nexti = i + 1 < onlyTargetEdgeOwnerShorts.length ? i + 1 : i
+        if (cnt !== data.edgeOwnersLength[targetShortSection]) continue
+        if (
+          onlyTargetEdgeOwnerShorts[previ] === targetShortSection + 1 ||
+          onlyTargetEdgeOwnerShorts[nexti] === targetShortSection + 1
+        ) {
+          continue
+        }
+        const mapRoute = data.mapRoute.filter(mr => mr.id === targetShortSection)[0]
+        const mapRouteStations = mapRoute.stationIds.map(id => data.stations[id])
+        const mapRouteLines = mapRoute.lineIds.map(id => data.lines[id])
+        const replaceEDA = getEdgeDistanceArray({ stations: mapRouteStations, lines: mapRouteLines }) // 不具合が起きたら向きを考える
+        this.splice(ii, arrCnt, ...replaceEDA)
+        break
+      }
+    }
+  }
 }
 const routeValidity = (calcArg: CalcArgument) => {
   const stations = calcArg.stations
@@ -117,7 +177,7 @@ const routeValidity = (calcArg: CalcArgument) => {
     throw new ApplicationError('The route is not connected')
   }
 }
-const getDistance = (calcArg: CalcArgument): EdgeDistanceArray => {
+const getEdgeDistanceArray = (calcArg: CalcArgument): EdgeDistanceArray => {
   const [stations, lines] = [calcArg.stations, calcArg.lines]
   const result = new EdgeDistanceArray()
   for (let i = 0; i < lines.length; ++i) {
@@ -240,7 +300,8 @@ const applyArt85no3 = (resultFare: number, stations: Station[], routeDistance: E
 }
 export const calc = (calcArg: CalcArgument): CalcResponse => {
   routeValidity(calcArg)
-  const routeDistance = getDistance(calcArg)
+  const routeDistance = getEdgeDistanceArray(calcArg)
+  routeDistance.applyArt69()
   const companies = routeDistance.companies
   const hondoCompanies = companies.filter((c => (JRHondoCompanies as GroupJR[]).includes(c)) as ((
     c: GroupJR

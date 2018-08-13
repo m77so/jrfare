@@ -3,6 +3,11 @@ export interface MapZairai {
   endIndex: number
   targetLine: number
 }
+export interface MapRoute {
+  id: EdgeOwner
+  stationIds: number[]
+  lineIds: number[]
+}
 export interface Line {
   id: number
   name: string
@@ -55,7 +60,25 @@ export enum EdgeOwner {
   ADDCTS,
   ADDKMI,
   JRSADDA, // Art85(2)ha
-  JRSADDB // Art85(2)ha
+  JRSADDB, // Art85(2)ha
+  SHORTHKD,
+  SHORUHKD,
+  SHORTNPR,
+  SHORUNPR,
+  SHORTOMY,
+  SHORUOMY,
+  SHORTTRM,
+  SHORUTRM,
+  SHORTJE,
+  SHORUJE,
+  SHORTKB,
+  SHORUKB,
+  SHORTKO,
+  SHORUKO,
+  SHORTKRE,
+  SHORUKRE,
+  SHORTIWK,
+  SHORUIWK
 }
 export type ChihoJR = EdgeOwner.JRH | EdgeOwner.JRQ | EdgeOwner.JRS
 export type HondoJR = EdgeOwner.JRC | EdgeOwner.JRE | EdgeOwner.JRW
@@ -76,6 +99,28 @@ export const AdditionalFareSection = [
   EdgeOwner.ADDKIXB,
   EdgeOwner.ADDKMI,
   EdgeOwner.ADDSETO
+]
+export const ShortRouteSection = [
+  EdgeOwner.SHORTHKD,
+  EdgeOwner.SHORTNPR,
+  EdgeOwner.SHORTOMY,
+  EdgeOwner.SHORTTRM,
+  EdgeOwner.SHORTJE,
+  EdgeOwner.SHORTKB,
+  EdgeOwner.SHORTKO,
+  EdgeOwner.SHORTKRE,
+  EdgeOwner.SHORTIWK
+]
+export const ShortRouteSectionPair = [
+  EdgeOwner.SHORUHKD,
+  EdgeOwner.SHORUNPR,
+  EdgeOwner.SHORUOMY,
+  EdgeOwner.SHORUTRM,
+  EdgeOwner.SHORUJE,
+  EdgeOwner.SHORUKB,
+  EdgeOwner.SHORUKO,
+  EdgeOwner.SHORUKRE,
+  EdgeOwner.SHORUIWK
 ]
 export interface FareTable {
   km: number[]
@@ -104,4 +149,6 @@ export interface OutputJSON {
   stations: Station[]
   appendixFare: AppendixFare
   localDistance: number[]
+  mapRoute: MapRoute[]
+  edgeOwnersLength: number[]
 }

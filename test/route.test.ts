@@ -26,7 +26,6 @@ describe('Route/Hondo', () => {
     assert.equal(res.distanceResponse.operationDKm, 1371)
     assert.equal(res.distanceResponse.local, true)
     assert.equal(res.distanceResponse.kansen, false)
-    assert.equal(res.distanceResponse.operationFareKm, 138)
     assert.equal(res.fare, 2590)
   })
   it('Kansen and Local', () => {
@@ -63,6 +62,13 @@ describe('Route/Hondo', () => {
     const res = Route.calc({ stations: stations, lines: lines })
     assert.equal(res.distanceResponse.operationDKm, 146)
     assert.equal(res.fare, 220)
+  })
+  it('TokyoSS-notSS', () => {
+    const stations = ['八王子', '岡谷'].map(Main.getStationByName)
+    const lines = [Main.getLineByStationAndName('中央', '八王子')]
+    const res = Route.calc({ stations: stations, lines: lines })
+    assert.equal(res.distanceResponse.operationDKm, 1630)
+    assert.equal(res.fare, 3020)
   })
   it('OsakaSS', () => {
     const stations = ['京都', '尼崎'].map(Main.getStationByName)
@@ -231,5 +237,36 @@ describe('Route/AdditionalFare', () => {
     const res = Route.calc({ stations: stations, lines: lines })
     assert.equal(res.distanceResponse.operationDKm, 248)
     assert.equal(res.fare, 590)
+  })
+})
+
+describe('Art69 短縮', () => {
+  it('Kosei', () => {
+    const stations = ['鯖江', '米原', '京都'].map(Main.getStationByName)
+    const lines = ['北陸', '東海道'].map(Main.getLineByName)
+    const res = Route.calc({ stations: stations, lines: lines })
+    assert.equal(res.fare, 2270)
+    // assert.equal(res.distanceResponse.operationDKm, 1539)
+  })
+  it('Kosei', () => {
+    const stations = ['近江塩津', '米原', '山科'].map(Main.getStationByName)
+    const lines = ['北陸', '東海道'].map(Main.getLineByName)
+    const res = Route.calc({ stations: stations, lines: lines })
+    // assert.equal(res.distanceResponse.operationDKm, 1000)
+    assert.equal(res.fare, 1320)
+  })
+  it('Kosei', () => {
+    const stations = ['福井', '米原', '山科', '大津京'].map(Main.getStationByName)
+    const lines = ['北陸', '東海道', '湖西'].map(Main.getLineByName)
+    const res = Route.calc({ stations: stations, lines: lines })
+    // assert.equal(res.distanceResponse.operationDKm, 1000)
+    assert.equal(res.fare, 3020)
+  })
+  it('Double', () => {
+    const stations = ['福井', '米原', '神戸', '本由良']
+    const lines = ['北陸', '東海道', '山陽']
+    const res = Route.calc(Main.getCalcArg(stations, lines))
+    // assert.equal(res.distanceResponse.operationDKm, 7029)
+    assert.equal(res.fare, 9830)
   })
 })
