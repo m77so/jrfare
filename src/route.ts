@@ -121,16 +121,21 @@ class EdgeDistanceArray extends Array<EdgeDistance> {
     return this.flatmapOnly(ed => ed.kansen)
   }
   clone() {
-    return this.map(e => e.clone())
+    return this.map(e => e.clone()) as EdgeDistanceArray
   }
-  applyArt69() {
+  mergeSingleEdgeDistance() {
+    const resultDistanceResponse = new EdgeDistance(this[0].companies)
+    for (let rd of this) resultDistanceResponse.merge(rd)
+    return resultDistanceResponse
+  }
+  applyArt69(): EdgeDistanceArray {
     let genEdgeOwnerShorts = () =>
       this.map(ed => {
         const s = ed.companies.filter(c => ShortRouteSection.concat(ShortRouteSectionPair).includes(c))
         return s.length === 1 ? s[0] : null
       })
     let edgeOwnerShorts = genEdgeOwnerShorts()
-    if (edgeOwnerShorts.filter(c => c !== null).length === 0) return
+    if (edgeOwnerShorts.filter(c => c !== null).length === 0) return this
 
     for (let targetShortSection of ShortRouteSection) {
       const onlyTargetEdgeOwnerShorts = genEdgeOwnerShorts().map(
@@ -163,6 +168,7 @@ class EdgeDistanceArray extends Array<EdgeDistance> {
         break
       }
     }
+    return this
   }
 }
 const routeValidity = (calcArg: CalcArgument) => {
@@ -298,17 +304,13 @@ const applyArt85no3 = (resultFare: number, stations: Station[], routeDistance: E
   }
   return resultFare
 }
-export const calc = (calcArg: CalcArgument): CalcResponse => {
-  routeValidity(calcArg)
-  const routeDistance = getEdgeDistanceArray(calcArg)
-  routeDistance.applyArt69()
+export const calc = (routeDistance: EdgeDistanceArray, calcArg: CalcArgument): CalcResponse => {
   const companies = routeDistance.companies
   const hondoCompanies = companies.filter((c => (JRHondoCompanies as GroupJR[]).includes(c)) as ((
     c: GroupJR
   ) => c is HondoJR))
   const companies0 = companies[0]
-  const resultDistanceResponse = new EdgeDistance(companies)
-  for (let rd of routeDistance) resultDistanceResponse.merge(rd)
+  const resultDistanceResponse = routeDistance.mergeSingleEdgeDistance()
   resultDistanceResponse.companies = companies
   let [resultFare, additionalFare] = [0, 0]
   if (hondoCompanies.length > 0 && hondoCompanies.length === companies.length) {
@@ -325,4 +327,20 @@ export const calc = (calcArg: CalcArgument): CalcResponse => {
   // Art85-3
   resultFare = applyArt85no3(resultFare, calcArg.stations, routeDistance)
   return { fare: resultFare, distanceResponse: resultDistanceResponse }
+}
+interface RunResponse {
+  fare: number
+  route: DistanceResponse
+  fareRoute: DistanceResponse
+}
+export const run = (calcArg: CalcArgument): RunResponse => {
+  routeValidity(calcArg)
+  const routeDistance = getEdgeDistanceArray(calcArg)
+  const calcDistance = routeDistance.clone().applyArt69()
+  const calcRes = calc(calcDistance, calcArg)
+  return {
+    fare: calcRes.fare,
+    fareRoute: calcRes.distanceResponse,
+    route: routeDistance.mergeSingleEdgeDistance()
+  }
 }
